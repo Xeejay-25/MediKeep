@@ -7,11 +7,12 @@
         
         <div class="titles">
             <div class="tab-titles">
-                <p class="tab-links active-link" onclick="opentab('category')">Category <span></span></p>
-                <p class="tab-links" onclick="opentab('type')">Type <span></span></p> 
-                <p class="tab-links" onclick="opentab('add')">Add <span></span></p>                                     
+                <p class="tab-links {{ session('activeTab') == 'category' ? 'active-link' : '' }}" onclick="opentab('category')">Category <span></span></p>
+                <p class="tab-links {{ session('activeTab') == 'subcategory' ? 'active-link' : '' }}" onclick="opentab('type')">Type <span></span></p>
+                <p class="tab-links {{ session('activeTab') == 'add_product' ? 'active-link' : '' }}" onclick="opentab('add')">Add <span></span></p>                                     
             </div>
         </div>
+        @include('message')
          
         {{-- Category Edit Modal --}}
         <div class="modal fade" id="editCategoryModal" tabindex="-1" aria-labelledby="editCategoryModalLabel" aria-hidden="true">
@@ -71,7 +72,7 @@
 
 
         <!-- Medicine Category -->
-        <div class="tab-contents active-tab" id="category">
+        <div class="tab-contents {{ session('activeTab') == 'category' ? 'active-tab' : '' }}" id="category">
             <div class="card-body">
 
                 <div class="row mt-3 " >
@@ -152,7 +153,7 @@
          
 
         <!-- Medicine Type -->
-        <div class="tab-contents " id="type">
+        <div class="tab-contents {{ session('activeTab') == 'subcategory' ? 'active-tab' : '' }}" id="type">
             <div class="card-body">
 
                 <div class="row mt-3 " >
@@ -233,7 +234,7 @@
         <!-- end -->
         
         <!-- Add Medicine -->
-        <div class="tab-contents " id="add">
+        <div class="tab-contents {{ session('activeTab') == 'add_product' ? 'active-tab' : '' }}" id="add">
             <div class="card-body">
 
                 <div class="row mt-3 " >
@@ -243,7 +244,7 @@
                                 <div class="card-header mb-2 p-2"> 
                                     <h3 class="card-title">Add Medicine</h3>
                                 </div>
-                                @include('message')
+                                
 
                                 <form action="{{ route('staff.add_product') }}" method="post" >
 
@@ -373,3 +374,35 @@
     }
 
 </script>
+
+<script>
+    function opentab(tabId) {
+        // Remove 'active-link' from all tabs
+        document.querySelectorAll('.tab-links').forEach(tab => tab.classList.remove('active-link'));
+        document.querySelectorAll('.tab-contents').forEach(content => content.classList.remove('active-tab'));
+    
+        // Add 'active-link' to the clicked tab and 'active-tab' to the corresponding content
+        document.querySelector(`.tab-links[onclick="opentab('${tabId}')"]`).classList.add('active-link');
+        document.getElementById(tabId).classList.add('active-tab');
+    
+        // Update session data using AJAX to keep track of active tab on the server
+        fetch(`/set-active-tab`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            },
+            body: JSON.stringify({ activeTab: tabId })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status !== 'success') {
+                console.error('Error setting active tab:', data);
+            }
+        })
+        .catch(error => console.error('Fetch error:', error));
+    }
+    </script>
+    
+
+    

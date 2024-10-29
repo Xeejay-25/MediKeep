@@ -21,10 +21,14 @@ class Staff_dashboard extends Controller
     public function home ()
     {
         return view('staff.home');
+        
     }
     public function add ()
     
     {
+        if (!session()->has('activeTab')) {
+            session(['activeTab' => 'category']);
+        }
         $categories = Category::all();
         $subcategories = Subcategory::all();
         return view('staff.add',compact('categories', 'subcategories'));
@@ -54,7 +58,9 @@ class Staff_dashboard extends Controller
     {
         $deleteRecord =  Category::find($id);
         $deleteRecord->delete();
-        return redirect()->back()->with('success', "Medicine CAtegory Successfully Deleted");
+
+        session(['activeTab' => 'category']);
+        return redirect()->back()->with('success', "Medicine Type Successfully Deleted");
     }
 
     public function add_subcategory (Request $request)
@@ -63,7 +69,7 @@ class Staff_dashboard extends Controller
         $insertRecord->name = trim($request->name);
         $insertRecord->save();
 
-       
+        session(['activeTab' => 'subcategory']);
         return redirect()->back()->with('success', "Medicine Type Successfully Add");
     }
 
@@ -72,8 +78,8 @@ class Staff_dashboard extends Controller
         $category = Subcategory::find($request->id); 
         $category->name = $request->name;         
         $category->save();  
-        
-      
+
+        session(['activeTab' => 'subcategory']);
         return redirect()->back()->with('success', "Name Successfully Updated");
     }
 
@@ -82,8 +88,8 @@ class Staff_dashboard extends Controller
         $deleteRecord =  Subcategory::find($id);
         $deleteRecord->delete();
 
-
-        return redirect()->back()->with('success', "Medicine CAtegory Successfully Deleted");
+        session(['activeTab' => 'subcategory']);
+        return redirect()->back()->with('success', "Medicine Type Successfully Deleted");
     }
 
     public function add_product (Request $request)
@@ -101,8 +107,8 @@ class Staff_dashboard extends Controller
         $insertRecord->save();
 
       
-
-        return redirect()->back()->with('success', "Medicine Type Successfully Add");
+        session(['activeTab' => 'add_product']);
+        return redirect()->back()->with('success', "Product Successfully Add");
     }
 
     public function update_product (Request $request)
@@ -120,18 +126,27 @@ class Staff_dashboard extends Controller
         $product
         ->save();
 
-      
-
-        return redirect()->back()->with('success', "Medicine Type Successfully Add");
+        return redirect()->back()->with('success', "Product Successfully Add");
     }
 
     public function delete_product ($id)
     {
         $deleteRecord =  Product::find($id);
         $deleteRecord->delete();
-        return redirect()->back()->with('success', "Medicine Category Successfully Deleted");
+
+      
+        return redirect()->back()->with('success', "Product Successfully Deleted");
     }
 
+    
+    public function setActiveTab(Request $request)
+    {
+        $request->validate(['activeTab' => 'required|string']);
+        session(['activeTab' => $request->activeTab]);
+        return response()->json(['status' => 'success']);
+    }
+
+   
     public function list ()
     {
         $products = Product::all();
