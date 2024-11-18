@@ -51,11 +51,17 @@
                     <label for="editProductManufacturer" class="form-label">Manufacturer</label>
                     <input type="text" class="form-control" id="editProductManufacturer" name="manufacturer" required>
                   </div>
+                  <!-- Quantity -->
+                  <div class="mb-3">
+                    <label for="editProductQuantity" class="form-label">Quantity</label>
+                    <input type="text" class="form-control" id="editProductQuantity" name="quantity" required>
+                  </div>
                   <!-- Price -->
                   <div class="mb-3">
                     <label for="editProductPrice" class="form-label">Price</label>
                     <input type="text" class="form-control" id="editProductPrice" name="price" required>
                   </div>
+                  
                 </div>
               </div>
             </form>
@@ -96,6 +102,7 @@
                     Description: {{ $product->description }} <br>
                     Measurement: {{ $product->measurement }} <br>
                     Manufacturer: {{ $product->manufacturer }} <br>
+                    Quantity:{{ $product->quantity }} <br>
                   </td>
                   <td class="text-center align-middle"> {{ $product->subcategory }}</td>
                   <td class="text-center align-middle"> ₱ - {{ $product->price }}</td>
@@ -107,7 +114,8 @@
                       data-subcategory="{{ $product->subcategory }}" 
                       data-description="{{ $product->description }}" 
                       data-manufacturer="{{ $product->manufacturer }}" 
-                      data-price="{{ $product->price }}">Edit
+                      data-price="{{ $product->price }}"
+                      data-quantity="{{ $product->quantity }}">Edit
                     </button>
                     <form action="{{ route('staff.delete_product', $product->id) }}" method="POST" style="display:inline;">
                       @csrf
@@ -146,6 +154,7 @@
         var description = $(this).data('description');
         var manufacturer = $(this).data('manufacturer');
         var price = $(this).data('price');
+        var quantity = $(this).data('quantity');
         
         // Populate the modal with product data
         $('#editProductId').val(id);
@@ -154,7 +163,9 @@
         $('#editProductType').val(subcategory); // Populating the Type (subcategory)
         $('#editProductDescription').val(description);
         $('#editProductManufacturer').val(manufacturer);
+        $('#editProductQuantity').val(quantity);
         $('#editProductPrice').val(price);
+        
         
         // Show the modal
         $('#editProductModal').modal('show');

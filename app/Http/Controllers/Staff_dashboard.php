@@ -18,11 +18,31 @@ use App\Mail\OrderConfirmationMail;
 
 class Staff_dashboard extends Controller
 {
-    public function home ()
+    public function home()
     {
-        return view('staff.home');
-        
+        $totalProducts = Product::count();
+        $lowStockThreshold = 5; 
+        $lowStock = Product::where('quantity', '>', 0)
+                            ->where('quantity', '<=', $lowStockThreshold)
+                            ->count();
+        $outOfStock = Product::where('quantity', '=', 0)->count();
+        $totalSuppliers = Supplier::count();
+        $lowStockProducts = Product::where('quantity', '>', 0)
+            ->where('quantity', '<=', $lowStockThreshold)
+            ->get();
+        $outOfStockProducts = Product::where('quantity', '=', 0)->get();
+    
+        return view('staff.home', compact(
+            'totalProducts',
+            'lowStock',
+            'outOfStock',
+            'totalSuppliers',
+            'lowStockProducts',
+            'outOfStockProducts'
+        ));
     }
+    
+
     public function add ()
     
     {
@@ -99,6 +119,7 @@ class Staff_dashboard extends Controller
         $insertRecord->category = trim($request->category);
         $insertRecord->subcategory = trim($request->subcategory);
         $insertRecord->description = trim($request->description);
+        $insertRecord->quantity = trim($request->quantity);
         $insertRecord->price = trim($request->price);
         $insertRecord->manufacturer = trim($request->manufacturer);
         $insertRecord->prescription = $request->has('prescription');
@@ -118,6 +139,7 @@ class Staff_dashboard extends Controller
         $product->category = trim($request->category);
         $product->subcategory = trim($request->subcategory);
         $product->description = trim($request->description);
+        $product->quantity = trim($request->quantity);
         $product->price = trim($request->price);
         $product->manufacturer = trim($request->manufacturer);
         $product->prescription = $request->has('prescription');
@@ -161,47 +183,64 @@ class Staff_dashboard extends Controller
     }
 
     public function add_order(Request $request)
-    {
-        $validatedData = $request->validate([
-            'supplier_id' => 'required|exists:suppliers,id',
-            'staff_id' => 'required|string',
-            'order_date' => 'required|date',
-            'status' => 'required|string',
-            'product_id' => 'required|array',
-            'quantity' => 'required|array',
-            'unit_price' => 'required|array',
-            'total_price' => 'required|array',
-        ]);
+{
+    $validatedData = $request->validate([
+        'supplier_id' => 'required|exists:suppliers,id',
+        'staff_id' => 'required|string',
+        'order_date' => 'required|date',
+        'status' => 'required|string',
+        'product_id' => 'required|array',
+        'quantity' => 'required|array',
+        'unit_price' => 'required|array',
+        'total_price' => 'required|array',
+    ]);
 
-        $order = new Order;
-        $order->supplier_id = $validatedData['supplier_id'];
-        $order->staff_id = $validatedData['staff_id'];
-        $order->order_date = $validatedData['order_date'];
-        $order->status = $validatedData['status'];
-        $order->total_amount = array_sum($validatedData['total_price']);
-        $orderSaved = $order->save();
+    // Create the order
+    $order = new Order;
+    $order->supplier_id = $validatedData['supplier_id'];
+    $order->staff_id = $validatedData['staff_id'];
+    $order->order_date = $validatedData['order_date'];
+    $order->status = $validatedData['status'];
+    $order->total_amount = array_sum($validatedData['total_price']);
+    $orderSaved = $order->save();
 
-        if (!$orderSaved) {
-            return redirect()->back()->with('error', "Failed to save the order.");
-        }
-
-        foreach ($validatedData['product_id'] as $index => $productId) {
-            $orderItem = new Order_item;
-            $orderItem->order_id = $order->id;
-            $orderItem->product_id = $productId;
-            $orderItem->quantity = $validatedData['quantity'][$index];
-            $orderItem->unit_price = $validatedData['unit_price'][$index];
-            $orderItem->total_amount = $validatedData['total_price'][$index];
-            $orderItem->save();
-        }
-
-        $products = Product::whereIn('id', $request->product_id)->get(['id', 'name']);
-        $supplier = Supplier::find($validatedData['supplier_id']);
-        $supplierEmail = $supplier->contact_info;
-        Mail::to($supplierEmail)->send(new OrderConfirmationMail($order, $products, $supplier, $validatedData, "New Order Confirmation - Order ID: {$order->id}"));
-
-        return redirect()->back()->with('success', "Order successfully submitted and emailed to the supplier ");
+    if (!$orderSaved) {
+        return redirect()->back()->with('error', "Failed to save the order.");
     }
+
+    // Loop through each product and deduct quantity
+    foreach ($validatedData['product_id'] as $index => $productId) {
+        $orderItem = new Order_item;
+        $orderItem->order_id = $order->id;
+        $orderItem->product_id = $productId;
+        $orderItem->quantity = $validatedData['quantity'][$index];
+        $orderItem->unit_price = $validatedData['unit_price'][$index];
+        $orderItem->total_amount = $validatedData['total_price'][$index];
+        $orderItem->save();
+
+        // Deduct quantity from the product
+        $product = Product::find($productId);
+        
+        if ($product) {
+            $newQuantity = $product->quantity - $validatedData['quantity'][$index];
+            if ($newQuantity >= 0) {
+                $product->quantity = $newQuantity;
+                $product->save();
+            } else {
+                return redirect()->back()->with('error', "Not enough stock for product: {$product->name}");
+            }
+        }
+    }
+
+    // Send email to supplier
+    $products = Product::whereIn('id', $validatedData['product_id'])->get(['id', 'name']);
+    $supplier = Supplier::find($validatedData['supplier_id']);
+    $supplierEmail = $supplier->contact_info;
+    Mail::to($supplierEmail)->send(new OrderConfirmationMail($order, $products, $supplier, $validatedData, "New Order Confirmation - Order ID: {$order->id}"));
+
+    return redirect()->back()->with('success', "Order successfully submitted and emailed to the supplier.");
+}
+
 
     public function orderlist() 
     {

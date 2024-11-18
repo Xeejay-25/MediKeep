@@ -6,96 +6,107 @@
     <div class="container-fluid py-4">
         
        <!-- 4 cards header -->
-        <div class="row">
-            <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
-            <div class="card">
-                <div class="card-body p-3">
+<div class="row">
+    <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
+        <div class="card">
+            <div class="card-body p-3">
                 <div class="row">
                     <div class="col-8">
-                    <div class="numbers">
-                        <p class="text-sm mb-0 text-capitalize font-weight-bold">Kita sa drugs</p>
-                        <h5 class="font-weight-bolder mb-0">
-                        $53,000
-                        <span class="text-success text-sm font-weight-bolder">+55%</span>
-                        </h5>
-                    </div>
+                        <div class="numbers">
+                            <p class="text-sm mb-0 text-capitalize font-weight-bold">Total Products</p>
+                            <h5 class="font-weight-bolder mb-0">
+                                {{ $totalProducts }}
+                            </h5>
+                        </div>
                     </div>
                     <div class="col-4 text-end">
-                    <div class="icon icon-shape bg-gradient-primary shadow text-center border-radius-md">
-                        <i class="ni ni-money-coins text-lg opacity-10" aria-hidden="true"></i>
-                    </div>
+                        <div class="icon icon-shape bg-gradient-primary shadow text-center border-radius-md">
+                            <i class="ni ni-money-coins text-lg opacity-10" aria-hidden="true"></i>
+                        </div>
                     </div>
                 </div>
-                </div>
             </div>
-            </div>
-            <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
-            <div class="card">
-                <div class="card-body p-3">
+        </div>
+    </div>
+    <!-- Low Stocks Card -->
+    <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
+        <div class="card" onclick="showProductsModal('lowStock')" data-bs-toggle="modal" data-bs-target="#stockModal">
+            <div class="card-body p-3">
                 <div class="row">
                     <div class="col-8">
-                    <div class="numbers">
-                        <p class="text-sm mb-0 text-capitalize font-weight-bold">Stocks sa drugs</p>
-                        <h5 class="font-weight-bolder mb-0">
-                        2,300
-                        <span class="text-success text-sm font-weight-bolder">+3%</span>
-                        </h5>
-                    </div>
+                        <div class="numbers">
+                            <p class="text-sm mb-0 text-capitalize font-weight-bold">Low Stocks</p>
+                            <h5 class="font-weight-bolder mb-0">{{ $lowStock }}</h5>
+                        </div>
                     </div>
                     <div class="col-4 text-end">
-                    <div class="icon icon-shape bg-gradient-primary shadow text-center border-radius-md">
-                        <i class="ni ni-world text-lg opacity-10" aria-hidden="true"></i>
-                    </div>
+                        <div class="icon icon-shape bg-gradient-primary shadow text-center border-radius-md">
+                            <i class="ni ni-world text-lg opacity-10" aria-hidden="true"></i>
+                        </div>
                     </div>
                 </div>
-                </div>
             </div>
-            </div>
-            <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
-            <div class="card">
-                <div class="card-body p-3">
+        </div>
+    </div>
+
+    <!-- Out of Stocks Card -->
+    <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
+        <div class="card" onclick="showProductsModal('outOfStock')" data-bs-toggle="modal" data-bs-target="#stockModal">
+            <div class="card-body p-3">
                 <div class="row">
                     <div class="col-8">
-                    <div class="numbers">
-                        <p class="text-sm mb-0 text-capitalize font-weight-bold">bagong buyers</p>
-                        <h5 class="font-weight-bolder mb-0">
-                        +3,462
-                        <span class="text-danger text-sm font-weight-bolder">-2%</span>
-                        </h5>
-                    </div>
+                        <div class="numbers">
+                            <p class="text-sm mb-0 text-capitalize font-weight-bold">Out of Stocks</p>
+                            <h5 class="font-weight-bolder mb-0">{{ $outOfStock }}</h5>
+                        </div>
                     </div>
                     <div class="col-4 text-end">
-                    <div class="icon icon-shape bg-gradient-primary shadow text-center border-radius-md">
-                        <i class="ni ni-paper-diploma text-lg opacity-10" aria-hidden="true"></i>
-                    </div>
+                        <div class="icon icon-shape bg-gradient-primary shadow text-center border-radius-md">
+                            <i class="ni ni-paper-diploma text-lg opacity-10" aria-hidden="true"></i>
+                        </div>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal fade" id="stockModal" tabindex="-1" aria-labelledby="stockModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="stockModalLabel">Stock Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <ul id="productList" class="list-group"></ul>
                 </div>
             </div>
-            </div>
-            <div class="col-xl-3 col-sm-6">
-            <div class="card">
-                <div class="card-body p-3">
+        </div>
+    </div>
+    <div class="col-xl-3 col-sm-6">
+        <div class="card">
+            <div class="card-body p-3">
                 <div class="row">
                     <div class="col-8">
-                    <div class="numbers">
-                        <p class="text-sm mb-0 text-capitalize font-weight-bold">Sales</p>
-                        <h5 class="font-weight-bolder mb-0">
-                        $103,430
-                        <span class="text-success text-sm font-weight-bolder">+5%</span>
-                        </h5>
-                    </div>
+                        <div class="numbers">
+                            <p class="text-sm mb-0 text-capitalize font-weight-bold">Suppliers</p>
+                            <h5 class="font-weight-bolder mb-0">
+                                {{ $totalSuppliers }}
+                            </h5>
+                        </div>
                     </div>
                     <div class="col-4 text-end">
-                    <div class="icon icon-shape bg-gradient-primary shadow text-center border-radius-md">
-                        <i class="ni ni-cart text-lg opacity-10" aria-hidden="true"></i>
-                    </div>
+                        <div class="icon icon-shape bg-gradient-primary shadow text-center border-radius-md">
+                            <i class="ni ni-cart text-lg opacity-10" aria-hidden="true"></i>
+                        </div>
                     </div>
                 </div>
-                </div>
             </div>
-            </div>
-       </div>
+        </div>
+    </div>
+</div>
+
 
         <!-- table home -->
         <div class="card card-info mt-4 mb-4">
@@ -643,6 +654,43 @@
         <!-- footer -->
         @include('components.footer')
     </div>
+
+    <script>
+        const lowStockProducts = @json($lowStockProducts);
+        const outOfStockProducts = @json($outOfStockProducts);
+    
+        function showProductsModal(type) {
+            const productList = document.getElementById('productList');
+            productList.innerHTML = '';
+    
+            let products = [];
+            let modalTitle = '';
+    
+            if (type === 'lowStock') {
+                products = lowStockProducts;
+                modalTitle = 'Low Stock Products';
+            } else if (type === 'outOfStock') {
+                products = outOfStockProducts;
+                modalTitle = 'Out of Stock Products';
+            }
+    
+            document.getElementById('stockModalLabel').textContent = modalTitle;
+    
+            if (products.length === 0) {
+                productList.innerHTML = '<li class="list-group-item">No products found</li>';
+                return;
+            }
+    
+            products.forEach(product => {
+                const listItem = document.createElement('li');
+                listItem.classList.add('list-group-item');
+                listItem.textContent = `${product.name} - Quantity: ${product.quantity}`;
+                productList.appendChild(listItem);
+            });
+        }
+    </script>
+    
+    
 
 @endsection
 @push('custom-scripts')

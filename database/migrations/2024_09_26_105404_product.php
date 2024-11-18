@@ -18,11 +18,14 @@ return new class extends Migration
             $table->string('category');
             $table->text('description');
             $table->integer('price');
+            $table->integer('quantity')->default(0);
             $table->string('manufacturer');
             $table->string('measurement');
             $table->boolean('prescription')->default(false); 
             $table->timestamps(); 
         });
+
+        
     }
 
     /**

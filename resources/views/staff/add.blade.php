@@ -293,7 +293,7 @@
                                         <div class="col-md-8 mb-3">
                                             <div class="input-group">
                                                 <span class="input-group-text bg-gray-200 p-2">Descripion</span>
-                                                <textarea class="form-control "  rows="4" name="description" required></textarea>
+                                                <textarea class="form-control "  rows="6" name="description" required></textarea>
                                             </div>
                                         </div>
 
@@ -303,11 +303,17 @@
                                                 <input type="text" class="form-control" name="manufacturer" required>
                                             </div>
 
-                                            <div class="input-group">
+                                            <div class="input-group mb-3">
                                                 <span class="input-group-text bg-gray-200 p-2">Price</span>
                                                 <input type="number" class="form-control" name="price" required>
                                             </div>
+
+                                            <div class="input-group">
+                                                <span class="input-group-text bg-gray-200 p-2">Quantity</span>
+                                                <input type="number" class="form-control" name="quantity" required>
+                                            </div>
                                         </div>
+
 
                                       
 
