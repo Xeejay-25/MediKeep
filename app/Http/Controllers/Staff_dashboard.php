@@ -11,6 +11,7 @@ use App\Models\Order;
 use App\Models\Order_item;
 use App\Models\Supplier;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 use Illuminate\Support\Facades\Mail;
 
@@ -31,14 +32,37 @@ class Staff_dashboard extends Controller
             ->where('quantity', '<=', $lowStockThreshold)
             ->get();
         $outOfStockProducts = Product::where('quantity', '=', 0)->get();
-    
+
+        $suppliers = Supplier::all();
+
+        $salesData = DB::table('order')
+        ->select(
+            DB::raw("strftime('%m', order_date) as month"),
+            DB::raw("COUNT(*) as total_orders"),
+            DB::raw("SUM(total_amount) as total_sales")
+        )
+        ->groupBy(DB::raw("strftime('%m', order_date)"))
+        ->get();
+
+        // Format the sales data into usable arrays
+        $formattedData = [
+            'months' => $salesData->pluck('month')->map(function ($month) {
+                return date('F', mktime(0, 0, 0, $month, 10)); // Convert month number to month name
+            }),
+            'total_orders' => $salesData->pluck('total_orders'),
+            'total_sales' => $salesData->pluck('total_sales'),
+        ];
+
+        // Pass formattedData to the view
         return view('staff.home', compact(
             'totalProducts',
             'lowStock',
             'outOfStock',
             'totalSuppliers',
+            'suppliers',
             'lowStockProducts',
-            'outOfStockProducts'
+            'outOfStockProducts',
+            'formattedData'  
         ));
     }
     
@@ -195,7 +219,7 @@ class Staff_dashboard extends Controller
         'total_price' => 'required|array',
     ]);
 
-    // Create the order
+    
     $order = new Order;
     $order->supplier_id = $validatedData['supplier_id'];
     $order->staff_id = $validatedData['staff_id'];
@@ -208,7 +232,7 @@ class Staff_dashboard extends Controller
         return redirect()->back()->with('error', "Failed to save the order.");
     }
 
-    // Loop through each product and deduct quantity
+    
     foreach ($validatedData['product_id'] as $index => $productId) {
         $orderItem = new Order_item;
         $orderItem->order_id = $order->id;
@@ -218,7 +242,7 @@ class Staff_dashboard extends Controller
         $orderItem->total_amount = $validatedData['total_price'][$index];
         $orderItem->save();
 
-        // Deduct quantity from the product
+        
         $product = Product::find($productId);
         
         if ($product) {
@@ -232,7 +256,7 @@ class Staff_dashboard extends Controller
         }
     }
 
-    // Send email to supplier
+  
     $products = Product::whereIn('id', $validatedData['product_id'])->get(['id', 'name']);
     $supplier = Supplier::find($validatedData['supplier_id']);
     $supplierEmail = $supplier->contact_info;

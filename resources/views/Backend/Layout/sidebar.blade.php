@@ -65,7 +65,7 @@
                 </g>
               </svg>
             </div>
-            <span class="nav-link-text ms-1" >Add </span>
+            <span class="nav-link-text ms-1" >Add</span>
           </a>
           <div class="collapse" id="collapseAddProducts">
             <ul class="nav ms-6">
