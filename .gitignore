@@ -19,3 +19,9 @@ yarn-error.log
 /.idea
 /.vscode
 /public/profile_images
+database/seeders/UserSeeder.php
+database/seeders/UserSeeder.php
+config/mail.php
+composer.lock
+composer.lock
+composer.lock
