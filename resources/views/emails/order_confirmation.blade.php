@@ -70,7 +70,7 @@
     <div class="container">
         <div class="header">
             <img src="https://i.ibb.co/zSNR7Bf/Picsart-24-10-25-20-14-54-279.png" alt="Logo" 
-                    style="position: absolute; top: 10px; right: 10px; height: 150px; opacity: 1; transform: rotate(-15deg); z-index: 1;">
+                    style="position: absolute; top: 10px; right: 10px; height: 130px; opacity: 1; transform: rotate(-15deg); z-index: 1;">
             <h1>Order Request</h1>
         </div>
         <div class="content">

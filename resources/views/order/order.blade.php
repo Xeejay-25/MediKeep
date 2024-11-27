@@ -5,7 +5,8 @@
 
 <head>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>    
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.2/html2pdf.bundle.min.js"></script>
 </head>
 
 <style>
@@ -67,22 +68,26 @@
     .btn-primary {
         background-color: #007bff;
         border-color: #007bff;
+        border-radius: 50px;
     }
 
     .btn-primary:hover {
         background-color: #0056b3;
         border-color: #0056b3;
+        border-radius: 50px;
     }
 
     .btn-info {
         background-color: #007bff;
         border-color: #007bff;
+        border-radius: 50px;
         color: white;
     }
 
     .btn-info:hover {
         background-color: #0056b3;
         border-color: #0056b3;
+        border-radius: 50px;
     }
 
     .form-control:focus {
@@ -159,6 +164,90 @@
         justify-content: space-between;
     }
 
+    .notification-container {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        right: 100%;
+        padding: 10px 20px;
+        background: linear-gradient(to right, rgba(40, 167, 69, 1) 0%, rgba(40, 167, 69, 1) 80%, rgba(255, 255, 255, 1) 100%);
+        color: #fff;
+        border-radius: 50px 0 0 50px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.5s ease;
+        text-align: center;
+        font-weight: bold;
+    }
+
+    .notification-container.show {
+        opacity: 1;
+        visibility: visible;
+        transform: translateX(-10px) translateY(-50%); /* Slide in from the right */
+    }
+
+    .notification-container:after {
+        content: '';
+        display: inline-block;
+        width: 35px; 
+        background: transparent; 
+    }
+
+    .custom-success {
+        background-color: #28a745;
+        border-color: #28a745;
+        border-radius: 50px;
+        color: white;
+        cursor: pointer;
+    }
+
+    .custom-success:hover {
+        background-color: #218838;
+        border-color: #218838;
+        border-radius: 50px;
+        color: #fff;
+    }
+
+    .loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.7);
+        z-index: 99999;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        pointer-events: all;
+    }
+
+    .dual-ring-spinner {
+        display: inline-block;
+        width: 64px;
+        height: 64px;
+    }
+
+    .dual-ring-spinner:after {
+        content: " ";
+        display: block;
+        width: 48px;
+        height: 48px;
+        margin: 8px;
+        border-radius: 50%;
+        border: 6px solid #007bff;
+        border-color: #007bff transparent #28a745 transparent;
+        animation: dual-ring-spin 1.2s linear infinite;
+    }
+
+    @keyframes dual-ring-spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
 </style>
 
 <div class="container-fluid py-4 caret-block no-highlight">
@@ -168,7 +257,6 @@
                 <div class="card z-index-2">
                     <div class="card-body p-2">
 
-                        @include('message')
                         @if ($errors->any())
                             <div class="alert alert-danger">
                                 <ul>
@@ -179,61 +267,32 @@
                             </div>
                         @endif
 
-                        <div style="position: absolute; top: 10px; right: 10px; z-index: 10;">
+                        <div style="position: absolute; top: 30px; right: 30px; z-index: 10;">
                             <a href="{{ route('order.orderlist') }}" class="card-title" style="display: block; height: 100%; line-height: 1.5; padding: 10px; border-radius: 5px; text-align: right;">
+                                <div id="notification-container" class="notification-container position-absolute" style="pointer-events: none;"></div>
                                 <img src="https://i.ibb.co/zHVpKjb/toppng-com-shipping-png-512x512.png" alt="Order Items" style="height: 50px; width: auto;">
                             </a>
                         </div>
 
                         <!-- Order Form Starts Here -->
-                        <form action="{{ route('staff.add_order') }}" method="POST">
+                        <form id="orderForm" method="POST">
                             @csrf
+
+                            <div id="loadingOverlay" class="loading-overlay" style="display: none;">
+                                <div class="dual-ring-spinner"></div>
+                            </div>                            
+
                             <div class="row p-4">
                                 <!-- Left Column: Order Information -->
                                 <div class="col-md-6">
                                     <div class="card-header mb-2 p-2">
-                                        <h3 class="card-title no-interaction">Order Form</h3>
+                                        <h3 class="card-title" >Order Form</h3>
                                     </div>
-                                    <div class="form-group" style="margin-bottom: 15px; margin-top: 51px;">
-                                        <select class="form-control" name="supplier_id" id="supplierSelect" required onchange="checkQuantity()">
-                                            <option value="" disabled selected hidden style="color: lightgray;">Select Supplier</option>
-                                            @if($suppliers->isEmpty())
-                                                <option value="" disabled>No suppliers available</option>
-                                            @else
-                                                @foreach($suppliers as $supplier)
-                                                    <option value="{{ $supplier->id }}">{{ $supplier->name }}</option>
-                                                @endforeach
-                                            @endif
-                                        </select>
-                                    </div>
-                                    <div class="form-group no-interaction" style="margin-bottom: 15px;">
-                                        <input type="hidden" name="staff_id" value="{{ Auth::id() }}">
-                                        <input type="text" class="form-control" value="{{ Auth::user()->name }}" readonly placeholder="Staff">
-                                    </div>
-                                    <div class="form-group" style="margin-bottom: 15px;">
-                                        <input type="date" class="form-control" id="orderDate" name="order_date">
-                                    </div>
-                                    <div class="form-group no-interaction" style="margin-bottom: 15px;">
-                                        <input type="text" class="form-control" value="Pending" readonly placeholder="Status">
-                                        <input type="hidden" name="status" value="Pending">
-                                    </div>
-                                    
-                                    <div class="col-12 text-center">
-                                        {{-- <a href="{{ route('order.orderlist') }}" class="btn btn-primary">View Order List</a> --}}
-                                        <button type="submit" class="btn btn-primary" onclick="return validateOrderItems()">Submit Order</button>
-                                    </div>
-                                </div>
-
-                                <!-- Right Column: Order Items with Tabs -->
-                                <div class="col-md-6">
-                                    <div class="card-header mb-2 p-2" style="visibility: hidden;">
-                                        <h3 class="card-title" >Order Items</h3>
-                                    </div>
-                                    <!-- Tabs for Order Items -->
+                                    <!-- Tabbing sys -->
                                     <ul class="nav nav-tabs" id="orderItemsTabs" role="tablist">
                                         <li class="nav-item">
-                                            <a class="nav-link active" id="item1-tab" data-toggle="tab" href="#item1" role="tab" aria-controls="item1" aria-selected="true">
-                                                New Item
+                                            <a class="nav-link active" id="item1-tab" data-toggle="tab" href="#item1" role="tab" aria-controls="item1" aria-selected="true" style="font-size: 12px; font-weight: bold">
+                                                NEW ITEM
                                                 <button type="button" class="close-btn" onclick="removeTab(1)">&times;</button>
                                             </a>
                                         </li>
@@ -261,10 +320,44 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <!-- Buttons -->
+                                    <!-- add more item btn -->
                                     <div class="text-center">
-                                        <button type="button" class="btn btn-secondary" id="addMoreItemsBtn" onclick="addOrderItem()" disabled>Add More Items</button>
+                                        <button type="button" class="btn btn-secondary" style="border-radius: 50px" id="addMoreItemsBtn" onclick="addOrderItem()" disabled>Add More Items</button>
+                                    </div>
+                                </div>
+
+                                <!-- Right Column: Order Items with Tabs -->
+                                <div class="col-md-6">
+                                    <div class="card-header mb-2 p-2">
+                                        <h3 class="card-title no-interaction" style="visibility: hidden;">Order Form</h3>
+                                    </div>
+                                    <div class="form-group" style="margin-bottom: 15px; margin-top: 44px;">
+                                        <select class="form-control" name="supplier_id" id="supplierSelect" required onchange="checkQuantity()">
+                                            <option value="" disabled selected hidden style="color: lightgray;">Select Supplier</option>
+                                            @if($suppliers->isEmpty())
+                                                <option value="" disabled>No suppliers available</option>
+                                            @else
+                                                @foreach($suppliers as $supplier)
+                                                    <option value="{{ $supplier->id }}">{{ $supplier->name }}</option>
+                                                @endforeach
+                                            @endif
+                                        </select>
+                                    </div>
+                                    <div class="form-group no-interaction" style="margin-bottom: 15px;">
+                                        <input type="hidden" name="staff_id" value="{{ Auth::id() }}">
+                                        <input type="text" class="form-control" value="{{ Auth::user()->name }}" readonly placeholder="Staff">
+                                    </div>
+                                    <div class="form-group" style="margin-bottom: 15px;">
+                                        <input type="date" class="form-control" id="orderDate" name="order_date" required>
+                                    </div>
+                                    <div class="form-group no-interaction" style="margin-bottom: 15px;">
+                                        <input type="text" class="form-control" value="Pending" readonly placeholder="Status">
+                                        <input type="hidden" name="status" value="Pending">
+                                    </div>
+                                    <!-- order summary & submir order btn -->
+                                    <div class="col-12 text-center">
                                         <button type="button" class="btn btn-info" id="orderSummaryBtn" onclick="showOrderSummary()">Order Summary</button>
+                                        <button type="submit" class="btn custom-success" onclick="return validateOrderItems()">Submit Order</button>
                                     </div>
                                 </div>
                             </div>
@@ -275,7 +368,7 @@
             </div>
         </div>
     </div>
-    <!-- Order Summary Modal -->
+    <!-- modal -->
     <div class="modal fade" id="orderSummaryModal" tabindex="-1" role="dialog" aria-labelledby="orderSummaryModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
             <div class="modal-content" style="width: 800px; height: 600px; overflow: hidden; position: relative;">
@@ -326,6 +419,77 @@
     @include('components.footer')
 </div>
 
+<!-- Receipt Summary Modal -->
+<div class="modal fade" id="receiptSummaryModal" tabindex="-1" role="dialog" aria-labelledby="receiptSummaryModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+        <div class="modal-content" style="width: 800px; height: 600px; overflow: hidden; position: relative;">
+
+            <div id="receiptSummaryContainer" style="position: relative; z-index: 1;">
+
+                <!-- Logo -->
+                <img src="https://i.ibb.co/zSNR7Bf/Picsart-24-10-25-20-14-54-279.png" alt="Logo"
+                    style="position: absolute; top: 10px; right: 10px; height: 100px; opacity: 1; transform: rotate(-15deg); z-index: 1;">
+
+                <!-- Modal Header -->
+                <div class="modal-header d-flex justify-content-center align-items-center"
+                    style="background-color: #007bff; color: white; padding: 0.5rem 1rem; z-index: 2;">
+                    <h5 class="modal-title mx-auto" id="receiptSummaryModalLabel" style="margin: 0; font-weight: bold;">
+                        RECEIPT
+                    </h5>
+                </div>
+
+                <!-- Modal Body -->
+                <div class="modal-body d-flex flex-column px-5 no-interaction" style="height: calc(100% - 4rem);">
+                    <div class="mb-3 no-interaction">
+                        <p>Proccesed by: <strong>{{ Auth::user()->name }}</strong></p>
+                        <p>Supplier: <strong id="receiptSupplierName"></strong></p>
+                        <p>Receipt Number: <span id="receiptNumber"></span></p>
+                        <p>Receipt Date: <span id="receiptDate"></span></p>
+                    </div>
+
+                    <!-- Table for Receipt Items -->
+                    <div class="table-responsive flex-grow-1 no-interaction" style="max-height: 300px; overflow-y: auto;">
+                        <table class="table table-hover table-bordered table-striped mb-0">
+                            <thead class="thead-dark no-interaction">
+                                <tr>
+                                    <th class="text-center">Item</th>
+                                    <th class="text-center">Quantity</th>
+                                    <th class="text-center">Unit Price</th>
+                                    <th class="text-center">Total Price</th>
+                                </tr>
+                            </thead>
+                            <tbody id="receiptItemsTableBody">
+                                <!-- Will be populated -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Modal Footer for Total Amount -->
+                <div class="modal-footer p-0 no-interaction" style="position: relative; z-index: 2;">
+                    <table class="table mb-0 no-interaction">
+                        <tfoot>
+                            <tr>
+                                <th colspan="4" class="text-center bg-light no-interaction">
+                                    <div class="d-flex justify-content-center align-items-center">
+                                        <span class="text-right mr-2">Total Amount:<span class="opacity-0">--</span></span>
+                                        <span id="receiptTotalAmount" class="ml-2">₱0.00</span>
+                                    </div>
+                                </th>
+                            </tr>
+                        </tfoot>
+                    </table>
+
+
+                </div>
+                <div class="d-flex justify-content-center" style="padding-top: 10px; z-index: 3; position: relative;">
+                    <button type="button" class="btn btn-info" id="orderSummaryBtn" onclick="generatePDF()">Generate Receipt</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 
 
 @endsection
@@ -334,16 +498,75 @@
 <script>
     let itemCount = 1;
 
+    document.getElementById('orderForm').addEventListener('submit', function(event) {
+        event.preventDefault();
+        const formData = new FormData(this);
+
+        $('#loadingOverlay').appendTo('body').css('display', 'flex');
+
+        fetch("{{ route('staff.add_order') }}", {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            }
+        })
+        .then(response => {
+            if (!response.ok) throw new Error('Network response was not OK');
+            return response.json();
+        })
+        .then(data => {
+
+            document.getElementById('loadingOverlay').style.display = 'none';
+
+            const notificationContainer = document.getElementById('notification-container');
+
+            if (data.success) {
+                notificationContainer.innerHTML = `
+                    <span>${data.message}</span>
+                `;
+            } else {
+                notificationContainer.innerHTML = `
+                    <span>An error occurred: ${data.message}</span>
+                `;
+            }
+
+            notificationContainer.classList.add('show');
+            setTimeout(() => notificationContainer.classList.remove('show'), 5000);
+        })
+        .catch(error => {
+            console.error('Error:', error);
+
+            document.getElementById('loadingOverlay').style.display = 'none';
+
+            const notificationContainer = document.getElementById('notification-container');
+            notificationContainer.innerHTML = `
+                <span>An error occurred. Please try again.</span>
+            `;
+            notificationContainer.classList.add('show');
+
+            setTimeout(() => notificationContainer.classList.remove('show'), 5000);
+        });
+    });
+
+    document.getElementById("orderSummaryBtn").addEventListener("click", function(event) {
+        event.preventDefault();
+
+        if (document.querySelector("form").checkValidity()) {
+            showOrderSummary();
+        } else {
+            document.querySelector("form").reportValidity();
+        }
+    });
+
     const orderDateInput = document.getElementById("orderDate");
-
     orderDateInput.addEventListener("mousedown", (e) => {
-        e.preventDefault(); // Prevents all mouse clicks from triggering text selection
+        e.preventDefault();
     });
-
     orderDateInput.addEventListener("selectstart", (e) => {
-        e.preventDefault(); // Prevents the start of selection entirely
+        e.preventDefault();
     });
-
 
     document.addEventListener("DOMContentLoaded", function() {
         const productSelect = document.querySelectorAll('.product-select');
@@ -356,7 +579,7 @@
         var price = selectedOption.getAttribute('data-price');
         var unitPriceInput = selectElement.closest('.order-items').querySelector('.unit-price');
         unitPriceInput.value = price;
-        calculateTotalPrice(1);
+        calculateTotalPrice(selectElement.closest('.order-items').querySelector('.quantity').id.split('quantity')[1]);
     }
 
     function calculateTotalPrice(index) {
@@ -407,8 +630,8 @@
 
         var newItemTab = `
             <li class="nav-item">
-                <a class="nav-link" id="item${itemCount}-tab" data-toggle="tab" href="#item${itemCount}" role="tab" aria-controls="item${itemCount}" aria-selected="false">
-                    New Item
+                <a class="nav-link" id="item${itemCount}-tab" data-toggle="tab" href="#item${itemCount}" role="tab" aria-controls="item${itemCount}" aria-selected="false" style="font-size: 12px; font-weight: bold">
+                    NEW ITEM
                     <button type="button" class="close-btn" onclick="removeTab(${itemCount})">&times;</button>
                 </a>
             </li>
@@ -452,7 +675,7 @@
 
     function updateTabName(selectElement) {
         var selectedOption = selectElement.options[selectElement.selectedIndex];
-        var productName = selectedOption.text;
+        var productName = selectedOption.text.toUpperCase();
         var tabId = selectElement.closest('.tab-pane').id;
 
         document.querySelector(`a[href='#${tabId}']`).innerHTML = `
@@ -489,7 +712,6 @@
             const tab = document.querySelector(`#item${i}`);
             if (tab) {
                 tab.id = `item${i - 1}`;
-                // Update select and input IDs accordingly
                 const productSelect = tab.querySelector('.product-select');
                 const quantityInput = tab.querySelector(`#quantity${i}`);
                 const unitPriceInput = tab.querySelector(`#unitPrice${i}`);
@@ -503,45 +725,195 @@
         }
     }
 
-
     function showOrderSummary() {
+        const supplierSelect = document.getElementById('supplierSelect');
+        const orderDate = document.getElementById('orderDate');
+        const productSelects = document.querySelectorAll('.product-select');
+        const quantityInputs = document.querySelectorAll('.quantity');
 
-        const supplierName = document.getElementById('supplierSelect').selectedOptions[0].text;
-        document.getElementById('supplierName').innerText = supplierName;
+        let isValid = true;
+        if (!supplierSelect.value) {
+            isValid = false;
+            supplierSelect.reportValidity();
+        } else if (!orderDate.value) {
+            isValid = false;
+            orderDate.reportValidity();
+        } else {
+            productSelects.forEach((productSelect, index) => {
+                if (!productSelect.value) {
+                    isValid = false;
+                    productSelect.reportValidity();
+                }
+            });
 
-        const orderItemsTableBody = document.getElementById('orderItemsTableBody');
-        orderItemsTableBody.innerHTML = '';
+            quantityInputs.forEach((quantityInput, index) => {
+                if (!quantityInput.value || quantityInput.value <= 0) {
+                    isValid = false;
+                    quantityInput.reportValidity();
+                }
+            });
+        }
 
-        let totalAmount = 0;
+        if (isValid) {
 
-        for (let i = 1; i <= itemCount; i++) {
-            const productSelect = document.querySelector(`#item${i} .product-select`);
-            const quantityInput = document.querySelector(`#quantity${i}`);
-            const unitPriceInput = document.querySelector(`#unitPrice${i}`);
-            const totalPriceInput = document.querySelector(`#totalPrice${i}`);
+            const supplierName = supplierSelect.selectedOptions[0].text;
+            document.getElementById('supplierName').innerText = supplierName;
 
-            if (productSelect && quantityInput && unitPriceInput && totalPriceInput) {
+            const orderItemsTableBody = document.getElementById('orderItemsTableBody');
+            orderItemsTableBody.innerHTML = '';
+
+            let totalAmount = 0;
+
+            productSelects.forEach((productSelect, index) => {
+                const quantityInput = quantityInputs[index];
+                const unitPriceInput = document.querySelector(`#unitPrice${index + 1}`);
+                const totalPriceInput = document.querySelector(`#totalPrice${index + 1}`);
+
                 if (productSelect.value && quantityInput.value) {
                     const itemName = productSelect.options[productSelect.selectedIndex].text;
                     const quantity = quantityInput.value;
-                    const unitPrice = unitPriceInput.value;
-                    const totalPrice = totalPriceInput.value;
+                    const unitPrice = parseFloat(unitPriceInput.value);
+                    const totalPrice = parseFloat(totalPriceInput.value);
+
+                    const calculatedTotalPrice = quantity * unitPrice;
 
                     const row = `<tr>
                         <td class="text-center">${itemName}</td>
                         <td class="text-center">${quantity}</td>
-                        <td class="text-center">₱${parseFloat(unitPrice).toFixed(2)}</td>
-                        <td class="text-center">₱${parseFloat(totalPrice).toFixed(2)}</td>
+                        <td class="text-center">₱${unitPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                        <td class="text-center">₱${calculatedTotalPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                     </tr>`;
+                    
                     orderItemsTableBody.innerHTML += row;
 
-                    totalAmount += parseFloat(totalPrice);
+                    totalAmount += calculatedTotalPrice;
                 }
-            }
+            });
+
+            const formattedTotalAmount = totalAmount % 1 === 0
+                ? `₱${totalAmount.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
+                : `₱${totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+            document.getElementById('totalAmount').innerText = formattedTotalAmount;
+            $('#orderSummaryModal').modal('show');
         }
-        document.getElementById('totalAmount').innerText = `₱${totalAmount.toFixed(2)}`;
-        $('#orderSummaryModal').modal('show');
     }
+   function showOrderReceipt() {
+        const supplierSelect = document.getElementById('supplierSelect');
+        const orderDate = document.getElementById('orderDate').value;
+        const productSelects = document.querySelectorAll('.product-select');
+        const quantityInputs = document.querySelectorAll('.quantity');
+
+        let isValid = true;
+
+        // Check for validity
+        if (!supplierSelect.value) {
+            isValid = false;
+            supplierSelect.reportValidity();
+        } else if (!orderDate) {
+            isValid = false;
+            document.getElementById('orderDate').reportValidity();
+        } else {
+            productSelects.forEach((productSelect) => {
+                if (!productSelect.value) {
+                    isValid = false;
+                    productSelect.reportValidity();
+                }
+            });
+
+            quantityInputs.forEach((quantityInput) => {
+                if (!quantityInput.value || quantityInput.value <= 0) {
+                    isValid = false;
+                    quantityInput.reportValidity();
+                }
+            });
+        }
+
+        if (isValid) {
+            // Set supplier name in receipt
+            const supplierName = supplierSelect.selectedOptions[0].text;
+            document.getElementById('receiptSupplierName').innerText = supplierName;
+
+            document.getElementById('receiptDate').textContent = orderDate ? orderDate : '--';
+
+            const receiptId = `R-${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}`;
+            document.getElementById('receiptNumber').textContent = receiptId;
+
+            const orderItemsTableBody = document.getElementById('receiptItemsTableBody');
+            orderItemsTableBody.innerHTML = '';
+
+            let totalAmount = 0;
+
+            productSelects.forEach((productSelect, index) => {
+                const quantityInput = quantityInputs[index];
+                const unitPriceInput = document.querySelector(`#unitPrice${index + 1}`);
+
+                if (productSelect.value && quantityInput.value) {
+                    const itemName = productSelect.options[productSelect.selectedIndex].text;
+                    const quantity = parseInt(quantityInput.value);
+                    const unitPrice = parseFloat(unitPriceInput.value);
+                    const calculatedTotalPrice = quantity * unitPrice;
+
+                    // Format unit price and total price
+                    const formattedUnitPrice = `₱${unitPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+                    const formattedTotalPrice = `₱${calculatedTotalPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+                    const row = `
+                        <tr>
+                            <td class="text-center">${itemName}</td>
+                            <td class="text-center">${quantity}</td>
+                            <td class="text-center">${formattedUnitPrice}</td>
+                            <td class="text-center">${formattedTotalPrice}</td>
+                        </tr>
+                    `;
+
+                    orderItemsTableBody.innerHTML += row;
+
+                    totalAmount += calculatedTotalPrice;
+                }
+            });
+
+            // Format and display the total amount
+            const formattedTotalAmount = totalAmount % 1 === 0
+                ? `₱${totalAmount.toLocaleString(undefined, { minimumFractionDigits: 0 })}`
+                : `₱${totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+            document.getElementById('receiptTotalAmount').innerText = formattedTotalAmount;
+
+            // Show the modal
+            $('#receiptSummaryModal').modal('show');
+
+        }
+    }
+
+
+
+    function generatePDF() {
+        const element = document.getElementById('receiptSummaryContainer');
+        const pdfButton = document.querySelector('button[onclick="generatePDF()"]');
+
+        pdfButton.style.display = 'none';
+
+        const options = {
+            margin: 0.5,
+            filename: 'Receipt_Summary.pdf',
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: {
+                scale: 2,
+                logging: true,
+                useCORS: true,
+                backgroundColor: "#ffffff"
+            },
+            jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
+        };
+
+
+        html2pdf().set(options).from(element).save()
+            .then(function() {
+                pdfButton.style.display = 'inline-block';
+        });
+}
+
 
 </script>
 @endpush

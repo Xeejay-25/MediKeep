@@ -228,9 +228,31 @@ class Staff_dashboard extends Controller
     $order->total_amount = array_sum($validatedData['total_price']);
     $orderSaved = $order->save();
 
-    if (!$orderSaved) {
-        return redirect()->back()->with('error', "Failed to save the order.");
-    }
+// <<<<<<< HEAD
+//     if (!$orderSaved) {
+//         return redirect()->back()->with('error', "Failed to save the order.");
+// =======
+//         if (!$orderSaved) {
+//             return redirect()->back()->with('error', "Failed to save the order.");
+//         }
+
+//         foreach ($validatedData['product_id'] as $index => $productId) {
+//             $orderItem = new Order_item;
+//             $orderItem->order_id = $order->id;
+//             $orderItem->product_id = $productId;
+//             $orderItem->quantity = $validatedData['quantity'][$index];
+//             $orderItem->unit_price = $validatedData['unit_price'][$index];
+//             $orderItem->total_amount = $validatedData['total_price'][$index];
+//             $orderItem->save();
+//         }
+
+//         $products = Product::whereIn('id', $request->product_id)->get(['id', 'name']);
+//         $supplier = Supplier::find($validatedData['supplier_id']);
+//         $supplierEmail = $supplier->contact_info;
+//         Mail::to($supplierEmail)->send(new OrderConfirmationMail($order, $products, $supplier, $validatedData, "New Order Confirmation - Order ID: {$order->id}"));
+//         return response()->json(['success' => true, 'message' => "Your order has been placed! "]);
+// >>>>>>> 81c85bc21c784e7a7e45a0efafde144e616bccf0
+//     }
 
     
     foreach ($validatedData['product_id'] as $index => $productId) {
