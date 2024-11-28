@@ -358,6 +358,7 @@
                                     <div class="col-12 text-center">
                                         <button type="button" class="btn btn-info" id="orderSummaryBtn" onclick="showOrderSummary()">Order Summary</button>
                                         <button type="submit" class="btn custom-success" onclick="return validateOrderItems()">Submit Order</button>
+                                        <button type="button" class="btn btn-info" id="orderSummaryBtn" onclick="showOrderReceipt()">View Receipt</button>
                                     </div>
                                 </div>
                             </div>
