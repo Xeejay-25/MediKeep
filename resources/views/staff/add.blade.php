@@ -96,7 +96,7 @@
                                     </div>
 
                                     <div class="px-4 mb-4">
-                                        <button type="submit"  class="btn btn-primary">
+                                        <button type="submit"  class="btn bg-gradient-btn">
                                         Add 
                                         </button>
                                         <a href="{{ url ('staff/home')}}" class="btn btn-danger float-right"> Cancel</a>
@@ -177,7 +177,7 @@
                                     </div>
 
                                     <div class="px-4 mb-4">
-                                        <button type="submit"  class="btn btn-primary">
+                                        <button type="submit"  class="btn bg-gradient-btn">
                                         Add 
                                         </button>
                                         <a href="{{ url ('staff/home')}}" class="btn btn-danger float-right"> Cancel</a>
@@ -331,7 +331,7 @@
                                     </div>
 
                                     <div class="px-4 mb-4">
-                                        <button type="submit"  class="btn btn-primary">
+                                        <button type="submit"  class="btn bg-gradient-btn">
                                         Add 
                                         </button>
                                         <a href="{{ url ('staff/home')}}" class="btn btn-danger float-right"> Cancel</a>
