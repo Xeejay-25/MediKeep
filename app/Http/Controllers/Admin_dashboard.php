@@ -5,14 +5,61 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 
 use App\Models\User;
+use App\Models\Order;
+use App\Models\Product;
+use App\Models\Supplier;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\DB;
 
 class Admin_dashboard extends Controller
 {
     public function home()
     {
         $totalUsers = User::count();
-        return view('admin.home', compact('totalUsers'));
+
+        $totalProducts = Product::count();
+        $lowStockThreshold = 5; 
+        $lowStock = Product::where('quantity', '>', 0)
+                            ->where('quantity', '<=', $lowStockThreshold)
+                            ->count();
+        $outOfStock = Product::where('quantity', '=', 0)->count();
+        $totalSuppliers = Supplier::count();
+        $lowStockProducts = Product::where('quantity', '>', 0)
+            ->where('quantity', '<=', $lowStockThreshold)
+            ->get();
+        $outOfStockProducts = Product::where('quantity', '=', 0)->get();
+
+        $suppliers = Supplier::all();
+
+        $salesData = DB::table('order')
+        ->select(
+            DB::raw("strftime('%m', order_date) as month"),
+            DB::raw("COUNT(*) as total_orders"),
+            DB::raw("SUM(total_amount) as total_sales")
+        )
+        ->groupBy(DB::raw("strftime('%m', order_date)"))
+        ->get();
+
+        // Format the sales data into usable arrays
+        $formattedData = [
+            'months' => $salesData->pluck('month')->map(function ($month) {
+                return date('F', mktime(0, 0, 0, $month, 10)); // Convert month number to month name
+            }),
+            'total_orders' => $salesData->pluck('total_orders'),
+            'total_sales' => $salesData->pluck('total_sales'),
+        ];
+
+
+        return view('admin.home', compact(
+            'totalUsers',
+            'totalProducts',
+            'lowStock',
+            'outOfStock',
+            'totalSuppliers',
+            'suppliers',
+            'lowStockProducts',
+            'outOfStockProducts',
+            'formattedData'));
     }
 
     public function index()

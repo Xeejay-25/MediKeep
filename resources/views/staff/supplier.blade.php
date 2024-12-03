@@ -40,7 +40,7 @@
                                     @enderror
                                 </div>
                     
-                                <button type="submit" class="btn btn-primary">Add Supplier</button>
+                                <button type="submit" class="btn bg-gradient-btn ">Add Supplier</button>
                                 {{-- <a href="" class="btn btn-secondary">Back to List</a> --}}
                             </form>
 

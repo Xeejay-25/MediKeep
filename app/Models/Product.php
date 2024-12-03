@@ -11,7 +11,7 @@ class Product extends Model
 
     protected $table = 'product'; 
 
-    protected $fillable = ['name','category','subcategory','description', 'measurement','manufacturer', 'price','prescription','updated_at', 'created_at']; 
+    protected $fillable = ['name','category','subcategory','description', 'measurement','manufacturer', 'price', 'quantity','prescription','updated_at', 'created_at']; 
   
     public $timestamps = true; 
 }

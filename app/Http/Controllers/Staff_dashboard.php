@@ -11,6 +11,7 @@ use App\Models\Order;
 use App\Models\Order_item;
 use App\Models\Supplier;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 use Illuminate\Support\Facades\Mail;
 
@@ -18,13 +19,60 @@ use App\Mail\OrderConfirmationMail;
 
 class Staff_dashboard extends Controller
 {
-    public function home ()
+    public function home()
     {
-        return view('staff.home');
+        $totalProducts = Product::count();
+        $lowStockThreshold = 5; 
+        $lowStock = Product::where('quantity', '>', 0)
+                            ->where('quantity', '<=', $lowStockThreshold)
+                            ->count();
+        $outOfStock = Product::where('quantity', '=', 0)->count();
+        $totalSuppliers = Supplier::count();
+        $lowStockProducts = Product::where('quantity', '>', 0)
+            ->where('quantity', '<=', $lowStockThreshold)
+            ->get();
+        $outOfStockProducts = Product::where('quantity', '=', 0)->get();
+
+        $suppliers = Supplier::all();
+
+        $salesData = DB::table('order')
+        ->select(
+            DB::raw("strftime('%m', order_date) as month"),
+            DB::raw("COUNT(*) as total_orders"),
+            DB::raw("SUM(total_amount) as total_sales")
+        )
+        ->groupBy(DB::raw("strftime('%m', order_date)"))
+        ->get();
+
+        // Format the sales data into usable arrays
+        $formattedData = [
+            'months' => $salesData->pluck('month')->map(function ($month) {
+                return date('F', mktime(0, 0, 0, $month, 10)); // Convert month number to month name
+            }),
+            'total_orders' => $salesData->pluck('total_orders'),
+            'total_sales' => $salesData->pluck('total_sales'),
+        ];
+
+        // Pass formattedData to the view
+        return view('staff.home', compact(
+            'totalProducts',
+            'lowStock',
+            'outOfStock',
+            'totalSuppliers',
+            'suppliers',
+            'lowStockProducts',
+            'outOfStockProducts',
+            'formattedData'  
+        ));
     }
+    
+
     public function add ()
     
     {
+        if (!session()->has('activeTab')) {
+            session(['activeTab' => 'category']);
+        }
         $categories = Category::all();
         $subcategories = Subcategory::all();
         return view('staff.add',compact('categories', 'subcategories'));
@@ -54,7 +102,9 @@ class Staff_dashboard extends Controller
     {
         $deleteRecord =  Category::find($id);
         $deleteRecord->delete();
-        return redirect()->back()->with('success', "Medicine CAtegory Successfully Deleted");
+
+        session(['activeTab' => 'category']);
+        return redirect()->back()->with('success', "Medicine Type Successfully Deleted");
     }
 
     public function add_subcategory (Request $request)
@@ -63,7 +113,7 @@ class Staff_dashboard extends Controller
         $insertRecord->name = trim($request->name);
         $insertRecord->save();
 
-       
+        session(['activeTab' => 'subcategory']);
         return redirect()->back()->with('success', "Medicine Type Successfully Add");
     }
 
@@ -72,8 +122,8 @@ class Staff_dashboard extends Controller
         $category = Subcategory::find($request->id); 
         $category->name = $request->name;         
         $category->save();  
-        
-      
+
+        session(['activeTab' => 'subcategory']);
         return redirect()->back()->with('success', "Name Successfully Updated");
     }
 
@@ -82,8 +132,8 @@ class Staff_dashboard extends Controller
         $deleteRecord =  Subcategory::find($id);
         $deleteRecord->delete();
 
-
-        return redirect()->back()->with('success', "Medicine CAtegory Successfully Deleted");
+        session(['activeTab' => 'subcategory']);
+        return redirect()->back()->with('success', "Medicine Type Successfully Deleted");
     }
 
     public function add_product (Request $request)
@@ -93,6 +143,7 @@ class Staff_dashboard extends Controller
         $insertRecord->category = trim($request->category);
         $insertRecord->subcategory = trim($request->subcategory);
         $insertRecord->description = trim($request->description);
+        $insertRecord->quantity = trim($request->quantity);
         $insertRecord->price = trim($request->price);
         $insertRecord->manufacturer = trim($request->manufacturer);
         $insertRecord->prescription = $request->has('prescription');
@@ -101,8 +152,8 @@ class Staff_dashboard extends Controller
         $insertRecord->save();
 
       
-
-        return redirect()->back()->with('success', "Medicine Type Successfully Add");
+        session(['activeTab' => 'add_product']);
+        return redirect()->back()->with('success', "Product Successfully Add");
     }
 
     public function update_product (Request $request)
@@ -112,6 +163,7 @@ class Staff_dashboard extends Controller
         $product->category = trim($request->category);
         $product->subcategory = trim($request->subcategory);
         $product->description = trim($request->description);
+        $product->quantity = trim($request->quantity);
         $product->price = trim($request->price);
         $product->manufacturer = trim($request->manufacturer);
         $product->prescription = $request->has('prescription');
@@ -120,18 +172,27 @@ class Staff_dashboard extends Controller
         $product
         ->save();
 
-      
-
-        return redirect()->back()->with('success', "Medicine Type Successfully Add");
+        return redirect()->back()->with('success', "Product Successfully Add");
     }
 
     public function delete_product ($id)
     {
         $deleteRecord =  Product::find($id);
         $deleteRecord->delete();
-        return redirect()->back()->with('success', "Medicine Category Successfully Deleted");
+
+      
+        return redirect()->back()->with('success', "Product Successfully Deleted");
     }
 
+    
+    public function setActiveTab(Request $request)
+    {
+        $request->validate(['activeTab' => 'required|string']);
+        session(['activeTab' => $request->activeTab]);
+        return response()->json(['status' => 'success']);
+    }
+
+   
     public function list ()
     {
         $products = Product::all();
@@ -146,46 +207,64 @@ class Staff_dashboard extends Controller
     }
 
     public function add_order(Request $request)
-    {
-        $validatedData = $request->validate([
-            'supplier_id' => 'required|exists:suppliers,id',
-            'staff_id' => 'required|string',
-            'order_date' => 'required|date',
-            'status' => 'required|string',
-            'product_id' => 'required|array',
-            'quantity' => 'required|array',
-            'unit_price' => 'required|array',
-            'total_price' => 'required|array',
-        ]);
+{
+    $validatedData = $request->validate([
+        'supplier_id' => 'required|exists:suppliers,id',
+        'staff_id' => 'required|string',
+        'order_date' => 'required|date',
+        'status' => 'required|string',
+        'product_id' => 'required|array',
+        'quantity' => 'required|array',
+        'unit_price' => 'required|array',
+        'total_price' => 'required|array',
+    ]);
 
-        $order = new Order;
-        $order->supplier_id = $validatedData['supplier_id'];
-        $order->staff_id = $validatedData['staff_id'];
-        $order->order_date = $validatedData['order_date'];
-        $order->status = $validatedData['status'];
-        $order->total_amount = array_sum($validatedData['total_price']);
-        $orderSaved = $order->save();
+    
+    $order = new Order;
+    $order->supplier_id = $validatedData['supplier_id'];
+    $order->staff_id = $validatedData['staff_id'];
+    $order->order_date = $validatedData['order_date'];
+    $order->status = $validatedData['status'];
+    $order->total_amount = array_sum($validatedData['total_price']);
+    $orderSaved = $order->save();
 
-        if (!$orderSaved) {
-            return redirect()->back()->with('error', "Failed to save the order.");
-        }
-
-        foreach ($validatedData['product_id'] as $index => $productId) {
-            $orderItem = new Order_item;
-            $orderItem->order_id = $order->id;
-            $orderItem->product_id = $productId;
-            $orderItem->quantity = $validatedData['quantity'][$index];
-            $orderItem->unit_price = $validatedData['unit_price'][$index];
-            $orderItem->total_amount = $validatedData['total_price'][$index];
-            $orderItem->save();
-        }
-
-        $products = Product::whereIn('id', $request->product_id)->get(['id', 'name']);
-        $supplier = Supplier::find($validatedData['supplier_id']);
-        $supplierEmail = $supplier->contact_info;
-        Mail::to($supplierEmail)->send(new OrderConfirmationMail($order, $products, $supplier, $validatedData, "New Order Confirmation - Order ID: {$order->id}"));
-        return response()->json(['success' => true, 'message' => "Your order has been placed! "]);
+    if (!$orderSaved) {
+        return redirect()->back()->with('error', "Failed to save the order.");
     }
+
+    
+    foreach ($validatedData['product_id'] as $index => $productId) {
+        $orderItem = new Order_item;
+        $orderItem->order_id = $order->id;
+        $orderItem->product_id = $productId;
+        $orderItem->quantity = $validatedData['quantity'][$index];
+        $orderItem->unit_price = $validatedData['unit_price'][$index];
+        $orderItem->total_amount = $validatedData['total_price'][$index];
+        $orderItem->save();
+
+        
+        $product = Product::find($productId);
+        
+        if ($product) {
+            $newQuantity = $product->quantity - $validatedData['quantity'][$index];
+            if ($newQuantity >= 0) {
+                $product->quantity = $newQuantity;
+                $product->save();
+            } else {
+                return redirect()->back()->with('error', "Not enough stock for product: {$product->name}");
+            }
+        }
+    }
+
+  
+    $products = Product::whereIn('id', $validatedData['product_id'])->get(['id', 'name']);
+    $supplier = Supplier::find($validatedData['supplier_id']);
+    $supplierEmail = $supplier->contact_info;
+    Mail::to($supplierEmail)->send(new OrderConfirmationMail($order, $products, $supplier, $validatedData, "New Order Confirmation - Order ID: {$order->id}"));
+
+    return redirect()->back()->with('success', "Order successfully submitted and emailed to the supplier.");
+}
+
 
     public function orderlist() 
     {

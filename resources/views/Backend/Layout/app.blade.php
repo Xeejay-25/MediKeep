@@ -3,6 +3,7 @@
 
     <head>
         @include('Backend.Layout.common-head')
+        <meta name="csrf-token" content="{{ csrf_token() }}">
     </head>
 
     <body class="g-sidenav-show  bg-gray-100 pt-0">

@@ -58,6 +58,7 @@ Route::middleware(['auth', 'loguseractivity', 'verified', 'autologout'])->group(
             Route::post('add_product', 'add_product')->name('staff.add_product');
             Route::put('update_product', 'update_product')->name('staff.update_product');
             Route::delete('delete_product/{id}', 'delete_product')->name('staff.delete_product');
+            Route::post('/set-active-tab', 'setActiveTab')->name('staff.add');
             Route::get('list', 'list')->name('staff.list');
             Route::get('order', 'order')->name('order.order');
             Route::post('add_order', 'add_order')->name('staff.add_order');
@@ -72,6 +73,7 @@ Route::middleware(['auth', 'loguseractivity', 'verified', 'autologout'])->group(
         });
 
     });
+    
 
     // Admin dashboard routes
     Route::middleware(['user-role:admin'])->group(function () {

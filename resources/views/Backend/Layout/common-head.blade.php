@@ -11,9 +11,11 @@
 <link href="{{ asset('assets/css/nucleo-icons.css') }}" rel="stylesheet" />
 <link href="{{ asset('assets/css/nucleo-svg.css') }}" rel="stylesheet" />
 <!-- Font Awesome Icons -->
+
 {{-- <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script> --}}
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
 <link href="{{ asset('assets/css/nucleo-svg.css') }}" rel="stylesheet" />
+
 <!-- CSS Files -->
 <link id="pagestyle" href="{{ asset('assets/css/soft-ui-dashboard.css?v=1.0.3') }}" rel="stylesheet" />
 <!-- table -->
@@ -21,6 +23,7 @@
 <!-- Tab-links -->
 <link rel="stylesheet" href="{{ asset('backend_auth/tab.css') }}">
 
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
   .status-circle {
       display: inline-block;

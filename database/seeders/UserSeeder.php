@@ -13,7 +13,7 @@ class UserSeeder extends Seeder
         $users = [
             [
                 'name' => 'Admin',
-                'email' => 'medikeepteam@gmail.com',
+                'email' => 'cj25efren@gmail.com',
                 'password' => bcrypt('medikeepadmin'),
                 'role' => User::ROLE_ADMIN, 
                 'status' => 'approved',
