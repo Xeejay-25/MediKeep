@@ -475,131 +475,124 @@
     let itemCount = 1;
 
     document.getElementById('orderForm').addEventListener('submit', function(event) {
-    event.preventDefault();
-    const formData = new FormData(this);
+        event.preventDefault();
+        const formData = new FormData(this);
 
-    $('#loadingOverlay').appendTo('body').css('display', 'flex');
+        $('#loadingOverlay').appendTo('body').css('display', 'flex');
 
-    fetch("{{ route('staff.add_order') }}", {
-        method: 'POST',
-        body: formData,
-        headers: {
-            'X-Requested-With': 'XMLHttpRequest',
-            'X-CSRF-TOKEN': '{{ csrf_token() }}'
-        }
-    })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        return response.json();
-    })
-    .then(data => {
-        document.getElementById('loadingOverlay').style.display = 'none';
-        const notificationContainer = document.getElementById('notification-container');
+        fetch("{{ route('staff.add_order') }}", {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            document.getElementById('loadingOverlay').style.display = 'none';
+            const notificationContainer = document.getElementById('notification-container');
 
-        if (data.success) {
-            // Show success notification
-            notificationContainer.innerHTML = `<span>${data.message}</span>`;
+            if (data.success) {
+                notificationContainer.innerHTML = `<span>${data.message}</span>`;
+                notificationContainer.classList.add('show');
+
+                setTimeout(() => {
+                    printOrderDetails();
+                }, 500);
+
+                setTimeout(() => {
+                    notificationContainer.classList.remove('show');
+                    location.reload();
+                }, 3000);
+            } else {
+                throw new Error(data.message || "An unknown error occurred.");
+            }
+        })
+        .catch(error => {
+            document.getElementById('loadingOverlay').style.display = 'none';
+
+            const notificationContainer = document.getElementById('notification-container');
+            notificationContainer.innerHTML = `<span>An error occurred: ${error.message}</span>`;
             notificationContainer.classList.add('show');
 
-            // Trigger the print dialog
-            setTimeout(() => {
-                printOrderDetails(); // Print receipt
-            }, 500);
-
-            setTimeout(() => {
-                notificationContainer.classList.remove('show');
-                location.reload(); // Reload after printing
-            }, 3000);
-        } else {
-            throw new Error(data.message || "An unknown error occurred.");
-        }
-    })
-    .catch(error => {
-        document.getElementById('loadingOverlay').style.display = 'none';
-
-        const notificationContainer = document.getElementById('notification-container');
-        notificationContainer.innerHTML = `<span>An error occurred: ${error.message}</span>`;
-        notificationContainer.classList.add('show');
-
-        setTimeout(() => notificationContainer.classList.remove('show'), 5000);
-    });
-});
-
-function printOrderDetails() {
-    // Populate printable area
-    const printOrderDate = document.getElementById('orderDate').value;
-    const supplierSelect = document.getElementById('supplierSelect');
-    const printSupplierName = supplierSelect.selectedOptions[0].text;
-
-    document.getElementById('printOrderDate').innerText = printOrderDate;
-    document.getElementById('printSupplierName').innerText = printSupplierName;
-
-    // Populate items in the printable area
-    const printOrderItems = document.getElementById('printOrderItems');
-    printOrderItems.innerHTML = ''; // Clear existing rows
-
-    const productSelects = document.querySelectorAll('.product-select');
-    const quantityInputs = document.querySelectorAll('.quantity');
-
-    let totalAmount = 0;
-
-    productSelects.forEach((productSelect, index) => {
-        if (productSelect.value && quantityInputs[index].value) {
-            const itemName = productSelect.options[productSelect.selectedIndex].text;
-            const quantity = quantityInputs[index].value;
-            const unitPrice = parseFloat(document.querySelector(`#unitPrice${index + 1}`).value);
-            const totalPrice = parseFloat(document.querySelector(`#totalPrice${index + 1}`).value);
-
-            totalAmount += totalPrice;
-
-            // Add row to the printable table
-            const row = `
-                <tr>
-                    <td>${itemName}</td>
-                    <td style="text-align: center;">${quantity}</td>
-                    <td style="text-align: right;">₱${unitPrice.toFixed(2)}</td>
-                    <td style="text-align: right;">₱${totalPrice.toFixed(2)}</td>
-                </tr>
-            `;
-            printOrderItems.innerHTML += row;
-        }
+            setTimeout(() => notificationContainer.classList.remove('show'), 5000);
+        });
     });
 
-    // Update total amount
-    document.getElementById('printTotalAmount').innerText = `₱${totalAmount.toFixed(2)}`;
+    function printOrderDetails() {
+        const printOrderDate = document.getElementById('orderDate').value;
+        const supplierSelect = document.getElementById('supplierSelect');
+        const printSupplierName = supplierSelect.selectedOptions[0].text;
 
-    // Trigger the print dialog
-    const printableContent = document.getElementById('printableArea').innerHTML;
+        document.getElementById('printOrderDate').innerText = printOrderDate;
+        document.getElementById('printSupplierName').innerText = printSupplierName;
 
-    const iframe = document.createElement('iframe');
-    iframe.style.position = 'absolute';
-    iframe.style.width = '0';
-    iframe.style.height = '0';
-    iframe.style.border = 'none';
+        const printOrderItems = document.getElementById('printOrderItems');
+        printOrderItems.innerHTML = '';
 
-    document.body.appendChild(iframe);
+        const productSelects = document.querySelectorAll('.product-select');
+        const quantityInputs = document.querySelectorAll('.quantity');
 
-    const iframeDoc = iframe.contentWindow.document;
-    iframeDoc.open();
-    iframeDoc.write(`
-        <html>
-            <head>
-                <title>Order Receipt</title>
-            </head>
-            <body>${printableContent}</body>
-        </html>
-    `);
-    iframeDoc.close();
+        let totalAmount = 0;
 
-    iframe.contentWindow.focus();
-    iframe.contentWindow.print();
+        productSelects.forEach((productSelect, index) => {
+            if (productSelect.value && quantityInputs[index].value) {
+                const itemName = productSelect.options[productSelect.selectedIndex].text;
+                const quantity = quantityInputs[index].value;
+                const unitPrice = parseFloat(document.querySelector(`#unitPrice${index + 1}`).value);
+                const totalPrice = parseFloat(document.querySelector(`#totalPrice${index + 1}`).value);
 
-    setTimeout(() => {
-        document.body.removeChild(iframe);
-    }, 1000);
-}
+                totalAmount += totalPrice;
+
+                const row = `
+                    <tr>
+                        <td>${itemName}</td>
+                        <td style="text-align: center;">${quantity}</td>
+                        <td style="text-align: right;">₱${unitPrice.toFixed(2)}</td>
+                        <td style="text-align: right;">₱${totalPrice.toFixed(2)}</td>
+                    </tr>
+                `;
+                printOrderItems.innerHTML += row;
+            }
+        });
+
+        document.getElementById('printTotalAmount').innerText = `₱${totalAmount.toFixed(2)}`;
+
+        const printableContent = document.getElementById('printableArea').innerHTML;
+
+        const iframe = document.createElement('iframe');
+        iframe.style.position = 'absolute';
+        iframe.style.width = '0';
+        iframe.style.height = '0';
+        iframe.style.border = 'none';
+
+        document.body.appendChild(iframe);
+
+        const iframeDoc = iframe.contentWindow.document;
+        iframeDoc.open();
+        iframeDoc.write(`
+            <html>
+                <head>
+                    <title>Order Receipt</title>
+                </head>
+                <body>${printableContent}</body>
+            </html>
+        `);
+        iframeDoc.close();
+
+        iframe.contentWindow.focus();
+        iframe.contentWindow.print();
+
+        setTimeout(() => {
+            document.body.removeChild(iframe);
+        }, 1000);
+    }
 
     document.getElementById("orderSummaryBtn").addEventListener("click", function(event) {
         event.preventDefault();
