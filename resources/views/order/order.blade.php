@@ -247,6 +247,28 @@
         100% { transform: rotate(360deg); }
     }
 
+    #printableArea {
+        width: 80mm; /* adjust per paper size req */
+        font-size: 12px;
+        line-height: 1.4;
+        margin: 0 auto;
+    }
+
+    #printableArea table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    #printableArea th, #printableArea td {
+        text-align: left;
+        padding: 5px;
+    }
+
+    #printableArea h3, #printableArea p {
+        text-align: center;
+        margin: 5px 0;
+    }
+
 </style>
 
 <div class="container-fluid py-4 caret-block no-highlight">
@@ -415,6 +437,33 @@
         </div>
     </div>
 
+    <div id="printableArea" style="display: none; width: 300px; margin: 0 auto; font-family: 'Courier New', Courier, monospace;">
+        <h3 style="text-align: center; font-size: 24px; font-weight: bold;">ORDER RECEIPT</h3>
+        <h3 style="text-align: center; font-size: 18px; margin-bottom: 10px;">MediKeep Pharmacy</h3>
+        <p style="text-align: center; font-size: 14px; margin: 5px 0;">Date: <span id="printOrderDate" style="font-weight: bold;"></span></p>
+        <p style="text-align: center; font-size: 14px; margin: 5px 0;">Supplier: <span id="printSupplierName" style="font-weight: bold;"></span></p>
+    
+        <table style="width: 100%; border-top: 1px solid #000; border-bottom: 1px solid #000; margin: 10px 0;">
+            <thead>
+                <tr>
+                    <th style="text-align: left; font-size: 14px; padding: 5px 0;">Item</th>
+                    <th style="text-align: center; font-size: 14px; padding: 5px 0;">Qty</th>
+                    <th style="text-align: right; font-size: 14px; padding: 5px 0;">Price</th>
+                    <th style="text-align: right; font-size: 14px; padding: 5px 0;">Total</th>
+                </tr>
+            </thead>
+            <tbody id="printOrderItems">
+                <!-- js data population -->
+            </tbody>
+        </table>
+    
+        <p style="font-size: 16px; text-align: right; font-weight: bold; margin-top: 10px;">
+            Total: <span id="printTotalAmount"></span>
+        </p>
+    
+        <p style="text-align: center; font-size: 12px; margin-top: 20px; color: #777;">Thank you for your purchase!</p>
+    </div>        
+
     @include('components.footer')
 </div>
 
@@ -424,57 +473,216 @@
 <script>
     let itemCount = 1;
 
-    document.getElementById('orderForm').addEventListener('submit', function(event) {
-        event.preventDefault();
-        const formData = new FormData(this);
+/* document.getElementById('orderForm').addEventListener('submit', function(event) {
+    event.preventDefault();
+    const formData = new FormData(this);
 
-        $('#loadingOverlay').appendTo('body').css('display', 'flex');
+    $('#loadingOverlay').appendTo('body').css('display', 'flex');
 
-        fetch("{{ route('staff.add_order') }}", {
-            method: 'POST',
-            body: formData,
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest',
-                'X-CSRF-TOKEN': '{{ csrf_token() }}'
-            }
-        })
-        .then(response => {
-            if (!response.ok) throw new Error('Network response was not OK');
-            return response.json();
-        })
-        .then(data => {
+    fetch("{{ route('staff.add_order') }}", {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+        }
+    })
+    .then(response => {
+        if (!response.ok) throw new Error('Network response was not OK');
+        return response.json();
+    })
+    .then(data => {
+        if (!data.success) {
+            throw new Error(data.message || 'An unexpected error occurred.');
+        }
 
-            document.getElementById('loadingOverlay').style.display = 'none';
+        document.getElementById('loadingOverlay').style.display = 'none';
+        const notificationContainer = document.getElementById('notification-container');
 
-            const notificationContainer = document.getElementById('notification-container');
+        notificationContainer.innerHTML = `<span>${data.message}</span>`;
+        notificationContainer.classList.add('show');
 
-            if (data.success) {
-                notificationContainer.innerHTML = `
-                    <span>${data.message}</span>
-                `;
-            } else {
-                notificationContainer.innerHTML = `
-                    <span>An error occurred: ${data.message}</span>
-                `;
-            }
+        document.getElementById('printSupplierName').innerText = document.getElementById('supplierSelect').selectedOptions[0].text;
+        document.getElementById('printOrderDate').innerText = document.getElementById('orderDate').value;
 
-            notificationContainer.classList.add('show');
-            setTimeout(() => notificationContainer.classList.remove('show'), 5000);
-        })
-        .catch(error => {
-            console.error('Error:', error);
+        const printOrderItems = document.getElementById('printOrderItems');
+        printOrderItems.innerHTML = '';
 
-            document.getElementById('loadingOverlay').style.display = 'none';
+        let totalAmount = 0;
 
-            const notificationContainer = document.getElementById('notification-container');
-            notificationContainer.innerHTML = `
-                <span>An error occurred. Please try again.</span>
+        document.querySelectorAll('.product-select').forEach((select, index) => {
+            const itemName = select.selectedOptions[0].text;
+            const quantity = document.querySelectorAll('.quantity')[index].value;
+            const unitPrice = parseFloat(document.querySelectorAll('.unit-price')[index].value);
+            const totalPrice = parseFloat(document.querySelectorAll('.total-price')[index].value);
+
+            const row = `
+                <tr>
+                    <td>${itemName}</td>
+                    <td>${quantity}</td>
+                    <td>₱${unitPrice.toFixed(2)}</td>
+                    <td>₱${totalPrice.toFixed(2)}</td>
+                </tr>
             `;
-            notificationContainer.classList.add('show');
 
-            setTimeout(() => notificationContainer.classList.remove('show'), 5000);
+            printOrderItems.innerHTML += row;
+            totalAmount += totalPrice;
         });
+
+        document.getElementById('printTotalAmount').innerText = `₱${totalAmount.toFixed(2)}`;
+
+        const iframe = document.createElement('iframe');
+        iframe.style.position = 'absolute';
+        iframe.style.width = '0';
+        iframe.style.height = '0';
+        iframe.style.border = 'none';
+        document.body.appendChild(iframe);
+
+        const iframeDoc = iframe.contentWindow.document;
+        iframeDoc.open();
+        iframeDoc.write(`
+            <html>
+                <head>
+                    <title>Order Details</title>
+                </head>
+                <body>
+                    ${document.getElementById('printableArea').innerHTML}
+                </body>
+            </html>
+        `);
+        iframeDoc.close();
+
+        iframe.contentWindow.focus();
+        iframe.contentWindow.print();
+
+        // Use window.onafterprint to reload the page after the print dialog closes
+        window.onafterprint = function() {
+            document.body.removeChild(iframe);
+            location.reload();
+        };
+
+    })
+    .catch(error => {
+        console.error('Error:', error);
+
+        document.getElementById('loadingOverlay').style.display = 'none';
+
+        const notificationContainer = document.getElementById('notification-container');
+        notificationContainer.innerHTML = `
+            <span>An error occurred. Please try again. Error: ${error.message}</span>
+        `;
+        notificationContainer.classList.add('show');
+
+        setTimeout(() => notificationContainer.classList.remove('show'), 5000);
     });
+}); */
+
+document.getElementById('orderForm').addEventListener('submit', function(event) {
+    event.preventDefault();
+    const formData = new FormData(this);
+
+    $('#loadingOverlay').appendTo('body').css('display', 'flex');
+
+    fetch("{{ route('staff.add_order') }}", {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+        }
+    })
+    .then(response => {
+        if (!response.ok) throw new Error('Network response was not OK');
+        return response.json();
+    })
+    .then(data => {
+        if (!data.success) {
+            throw new Error(data.message || 'An unexpected error occurred.');
+        }
+
+        document.getElementById('loadingOverlay').style.display = 'none';
+        const notificationContainer = document.getElementById('notification-container');
+
+        notificationContainer.innerHTML = `<span>${data.message}</span>`;
+        notificationContainer.classList.add('show');
+
+        // Setting print details
+        document.getElementById('printSupplierName').innerText = document.getElementById('supplierSelect').selectedOptions[0].text;
+        document.getElementById('printOrderDate').innerText = document.getElementById('orderDate').value;
+
+        const printOrderItems = document.getElementById('printOrderItems');
+        printOrderItems.innerHTML = '';
+
+        let totalAmount = 0;
+
+        document.querySelectorAll('.product-select').forEach((select, index) => {
+            const itemName = select.selectedOptions[0].text;
+            const quantity = document.querySelectorAll('.quantity')[index].value;
+            const unitPrice = parseFloat(document.querySelectorAll('.unit-price')[index].value);
+            const totalPrice = parseFloat(document.querySelectorAll('.total-price')[index].value);
+
+            const row = `
+                <tr>
+                    <td>${itemName}</td>
+                    <td>${quantity}</td>
+                    <td>₱${unitPrice.toFixed(2)}</td>
+                    <td>₱${totalPrice.toFixed(2)}</td>
+                </tr>
+            `;
+
+            printOrderItems.innerHTML += row;
+            totalAmount += totalPrice;
+        });
+
+        document.getElementById('printTotalAmount').innerText = `₱${totalAmount.toFixed(2)}`;
+
+        // Create iframe for printing
+        const iframe = document.createElement('iframe');
+        iframe.style.position = 'absolute';
+        iframe.style.width = '0';
+        iframe.style.height = '0';
+        iframe.style.border = 'none';
+        document.body.appendChild(iframe);
+
+        const iframeDoc = iframe.contentWindow.document;
+        iframeDoc.open();
+        iframeDoc.write(`
+            <html>
+                <head>
+                    <title>Order Details</title>
+                </head>
+                <body>
+                    ${document.getElementById('printableArea').innerHTML}
+                </body>
+            </html>
+        `);
+        iframeDoc.close();
+
+        iframe.contentWindow.focus();
+        iframe.contentWindow.print();
+
+        // After printing, remove iframe and reload after a short delay
+        setTimeout(() => {
+            document.body.removeChild(iframe);
+            // Reload the page after printing
+            location.reload();
+        }, 1000); // Delay to ensure the print dialog has fully completed
+
+    })
+    .catch(error => {
+        console.error('Error:', error);
+
+        document.getElementById('loadingOverlay').style.display = 'none';
+
+        const notificationContainer = document.getElementById('notification-container');
+        notificationContainer.innerHTML = `
+            <span>An error occurred. Please try again. Error: ${error.message}</span>
+        `;
+        notificationContainer.classList.add('show');
+
+        setTimeout(() => notificationContainer.classList.remove('show'), 5000);
+    });
+});
 
     document.getElementById("orderSummaryBtn").addEventListener("click", function(event) {
         event.preventDefault();
