@@ -207,64 +207,77 @@ class Staff_dashboard extends Controller
     }
 
     public function add_order(Request $request)
-{
-    $validatedData = $request->validate([
-        'supplier_id' => 'required|exists:suppliers,id',
-        'staff_id' => 'required|string',
-        'order_date' => 'required|date',
-        'status' => 'required|string',
-        'product_id' => 'required|array',
-        'quantity' => 'required|array',
-        'unit_price' => 'required|array',
-        'total_price' => 'required|array',
-    ]);
+    {
+        $validatedData = $request->validate([
+            'supplier_id' => 'required|exists:suppliers,id',
+            'staff_id' => 'required|string',
+            'order_date' => 'required|date',
+            'status' => 'required|string',
+            'product_id' => 'required|array',
+            'quantity' => 'required|array',
+            'unit_price' => 'required|array',
+            'total_price' => 'required|array',
+        ]);
 
-    
-    $order = new Order;
-    $order->supplier_id = $validatedData['supplier_id'];
-    $order->staff_id = $validatedData['staff_id'];
-    $order->order_date = $validatedData['order_date'];
-    $order->status = $validatedData['status'];
-    $order->total_amount = array_sum($validatedData['total_price']);
-    $orderSaved = $order->save();
+        DB::beginTransaction();
 
-    if (!$orderSaved) {
-        return redirect()->back()->with('error', "Failed to save the order.");
-    }
+        try {
+            $order = new Order;
+            $order->supplier_id = $validatedData['supplier_id'];
+            $order->staff_id = $validatedData['staff_id'];
+            $order->order_date = $validatedData['order_date'];
+            $order->status = $validatedData['status'];
+            $order->total_amount = array_sum($validatedData['total_price']);
+            $order->save();
 
-    
-    foreach ($validatedData['product_id'] as $index => $productId) {
-        $orderItem = new Order_item;
-        $orderItem->order_id = $order->id;
-        $orderItem->product_id = $productId;
-        $orderItem->quantity = $validatedData['quantity'][$index];
-        $orderItem->unit_price = $validatedData['unit_price'][$index];
-        $orderItem->total_amount = $validatedData['total_price'][$index];
-        $orderItem->save();
+            foreach ($validatedData['product_id'] as $index => $productId) {
+                $orderItem = new Order_item;
+                $orderItem->order_id = $order->id;
+                $orderItem->product_id = $productId;
+                $orderItem->quantity = $validatedData['quantity'][$index];
+                $orderItem->unit_price = $validatedData['unit_price'][$index];
+                $orderItem->total_amount = $validatedData['total_price'][$index];
+                $orderItem->save();
 
-        
-        $product = Product::find($productId);
-        
-        if ($product) {
-            $newQuantity = $product->quantity - $validatedData['quantity'][$index];
-            if ($newQuantity >= 0) {
-                $product->quantity = $newQuantity;
-                $product->save();
-            } else {
-                return redirect()->back()->with('error', "Not enough stock for product: {$product->name}");
+                $product = Product::find($productId);
+                if ($product) {
+                    $newQuantity = $product->quantity - $validatedData['quantity'][$index];
+                    if ($newQuantity < 0) {
+                        throw new \Exception("Not enough stock for product: {$product->name}");
+                    }
+                    $product->quantity = $newQuantity;
+                    $product->save();
+                }
             }
+
+            $supplier = Supplier::find($validatedData['supplier_id']);
+            $products = Product::whereIn('id', $validatedData['product_id'])->get(['id', 'name']);
+            $supplierEmail = $supplier->contact_info;
+
+            try {
+                Mail::to($supplierEmail)->send(
+                    new OrderConfirmationMail(
+                        $order,
+                        $products,
+                        $supplier,
+                        $validatedData,
+                        "New Order Confirmation - Order ID: {$order->id}"
+                    )
+                );
+            } catch (\Exception $e) {
+                throw new \Exception('Order saved, but email could not be sent. Error: ' . $e->getMessage());
+            }
+
+            DB::commit();
+
+            return response()->json(['success' => true, 'message' => 'Order successfully submitted and emailed to the supplier.']);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
     }
-
-  
-    $products = Product::whereIn('id', $validatedData['product_id'])->get(['id', 'name']);
-    $supplier = Supplier::find($validatedData['supplier_id']);
-    $supplierEmail = $supplier->contact_info;
-    Mail::to($supplierEmail)->send(new OrderConfirmationMail($order, $products, $supplier, $validatedData, "New Order Confirmation - Order ID: {$order->id}"));
-
-    return redirect()->back()->with('success', "Order successfully submitted and emailed to the supplier.");
-}
-
 
     public function orderlist() 
     {

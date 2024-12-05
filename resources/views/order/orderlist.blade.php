@@ -10,8 +10,9 @@
 
     <div class="card card-info mt-4 mb-4 p-4">
       <div class="card-body">
-        <div class="card-header mb-2 p-0"> 
+        <div class="card-header mb-2 p-0 d-flex justify-content-between align-items-center"> 
           <h3 class="card-title">Orders</h3>
+          <a href="{{ route('order.order') }}" class="btn btn-secondary">Back</a>
         </div>
 
         @include('message')
@@ -34,27 +35,24 @@
                       <td>{{ $item->quantity }}</td>
                       <td>{{ $item->total_amount }}</td>
                       <td class="align-middle">
-
-                        <div class="btn-group " role="group" aria-label="Basic example">
-                        
-                          <a href="{{ route('order.ordershow', $order->id) }}" type="button" class="btn btn-secondary">
-                              <i class="fas fa-info-circle"></i>
-                          </a>
-                          
-                         
-                          <a href="{{ route('order.orderedit', $order->id) }}" type="button" class="btn btn-warning">
-                              <i class="fas fa-edit"></i>
-                          </a>
-                          
-                          
-                          <button type="button" class="btn btn-danger" onclick="confirmAction({{ $order->id }}, 'Are you sure you want to delete this order?')">
-                              <i class="fas fa-archive"></i>
-                          </button>
-
+                        <div class="btn-group" role="group" aria-label="Order Actions">
+                            <!-- View Order -->
+                            <a href="{{ route('order.ordershow', $order->id) }}" type="button" class="btn btn-secondary me-1" title="View Order">
+                                <i class="fas fa-info-circle me-1"></i>
+                            </a>
+                    
+                            <!-- Edit Order -->
+                            <a href="{{ route('order.orderedit', $order->id) }}" type="button" class="btn btn-warning me-1" title="Edit Order">
+                                <i class="fas fa-edit me-1"></i>
+                            </a>
+                    
+                            <!-- Delete Order -->
+                            <button type="button" class="btn btn-danger" title="Delete Order" 
+                                    onclick="confirmAction({{ $order->id }}, 'Are you sure you want to delete this order?')">
+                                <i class="fas fa-archive me-1"></i>
+                            </button>
                         </div>
-
-                      </td>
-
+                    </td>
                       
                     </tr>
                   @endforeach
