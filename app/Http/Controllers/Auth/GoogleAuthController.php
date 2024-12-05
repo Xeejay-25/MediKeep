@@ -7,54 +7,45 @@ use Illuminate\Http\Request;
 use Laravel\Socialite\Facades\Socialite;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Str;
 
 class GoogleAuthController extends Controller
 {
-    public function redirect()
+    public function redirectToGoogle()
     {
         return Socialite::driver('google')->redirect();
     }
 
-    public function callbackGoogle()
+    public function handleGoogleCallback()
     {
         try {
-            $google_user = Socialite::driver('google')->user();
-            $user = User::where('google_id', $google_user->getId())->first();
+            $googleUser = Socialite::driver('google')->user();
+            $user = User::where('email', $googleUser->getEmail())->first();
 
-            if (!$user) {
-                $new_user = User::create([
-                    'name' => $google_user->getName(),
-                    'email' => $google_user->getEmail(),
-                    'google_id' => $google_user->getId(),
-                    'email_verified_at' => now(),
-                    'password' => bcrypt(Str::random(8)),
-                    'role' => User::ROLE_STAFF,
-                    'status' => 'pending',
-                    'profile_image' => $google_user->getAvatar(),
-                ]);
-
-                return redirect()->route('login')->withErrors(['email' => 'Unable to login. Account is not approved.']);
-            } else {
+            if ($user) {
                 if ($user->status === 'approved') {
                     Auth::login($user);
-                    
-                    if (!$user->profile_image) {
-                        $user->profile_image = $google_user->getAvatar();
-                        $user->save();
-                    }
-
-                    switch ($user->role) {
-                        case User::ROLE_ADMIN:
-                            return redirect()->intended(route('admin.home'));
-                        case User::ROLE_SUPERADMIN:
-                            return redirect()->intended(route('superadmin.home'));
-                        default:
-                            return redirect()->intended(route('staff.home'));
+                    if ($user->role === User::ROLE_ADMIN) {
+                        return redirect()->intended(route('admin.home'));
+                    } elseif ($user->role === User::ROLE_SUPERADMIN) {
+                        return redirect()->intended(route('superadmin.home'));
+                    } else {
+                        return redirect()->intended(route('staff.home'));
                     }
                 } else {
                     return redirect()->route('login')->withErrors(['email' => 'Unable to login. Account is not approved.']);
                 }
+            } else {
+                $user = User::create([
+                    'name' => $googleUser->getName(),
+                    'email' => $googleUser->getEmail(),
+                    'google_id' => $googleUser->getId(),
+                    'email_verified_at' => now(),
+                    'password' => bcrypt('1234'),
+                    'role' => User::ROLE_STAFF, 
+                    'status' => 'pending',  
+                ]);
+
+                return redirect()->route('login')->withErrors(['email' => 'Unable to login. Account is not approved.']);
             }
         } catch (\Exception $e) {
             return redirect()->route('login')->withErrors(['error' => 'Failed to authenticate with Google.']);

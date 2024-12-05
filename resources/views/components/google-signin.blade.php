@@ -1,5 +1,5 @@
 <div class="mt-5 text-center">
-    <a href="{{ route('google-auth') }}" class="login-with-google-btn">
+    <a href="{{ route('auth.google.redirect') }}" class="login-with-google-btn">
         {{ $buttonText }}
     </a>
 </div>
