@@ -20,7 +20,7 @@
             <div class="starting">
                 <div class="row">
                     <div class="col-md-6">
-                        <img src="welcome/invM.png" alt="LUCY" class="wow flipInY animated animated" style="width:70%; margin-top:50px; margin-left:50px; ">
+                        <img src="welcome/invM.png" alt="Medikeep" class="wow flipInY animated animated" style="width:70%; margin-top:50px; margin-left:50px; ">
                     </div>
                     <div class="col-md-6">
                         <div class="banner-text">
