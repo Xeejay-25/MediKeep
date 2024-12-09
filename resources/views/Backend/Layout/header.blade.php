@@ -23,7 +23,7 @@
                   @if(auth()->user()->profile_image)
                     <img src="{{ asset('profile_images/' . auth()->user()->profile_image) }}" alt="Profile Image" class="rounded-circle" style="width: 40px; height: 40px;">
                   @else
-                    img src="{{ asset('assets/img/default.png') }}" alt="Default Image" class="rounded-circle" style="width: 40px; height: 40px;">
+                    <img src="{{ asset('assets/img/default.png') }}" alt="Default Image" class="rounded-circle" style="width: 40px; height: 40px;">
                   @endif
                     <span class="d-sm-inline d-none">{{ Auth::user()->name }}</span>
                 </a>
