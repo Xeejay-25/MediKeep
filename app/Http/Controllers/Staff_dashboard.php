@@ -218,10 +218,30 @@ class Staff_dashboard extends Controller
             'unit_price' => 'required|array',
             'total_price' => 'required|array',
         ]);
-
+    
         DB::beginTransaction();
-
+    
         try {
+            foreach ($validatedData['product_id'] as $index => $productId) {
+                $product = Product::find($productId);
+    
+                if (!$product) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => "Product with ID {$productId} not found."
+                    ], 400);
+                }
+    
+                $newQuantity = $product->quantity - $validatedData['quantity'][$index];
+    
+                if ($newQuantity < 0) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => "Low Stock or Out of Stock: {$product->name} has only {$product->quantity} in stock.",
+                    ], 400);
+                }
+            }
+    
             $order = new Order;
             $order->supplier_id = $validatedData['supplier_id'];
             $order->staff_id = $validatedData['staff_id'];
@@ -229,7 +249,7 @@ class Staff_dashboard extends Controller
             $order->status = $validatedData['status'];
             $order->total_amount = array_sum($validatedData['total_price']);
             $order->save();
-
+    
             foreach ($validatedData['product_id'] as $index => $productId) {
                 $orderItem = new Order_item;
                 $orderItem->order_id = $order->id;
@@ -238,46 +258,22 @@ class Staff_dashboard extends Controller
                 $orderItem->unit_price = $validatedData['unit_price'][$index];
                 $orderItem->total_amount = $validatedData['total_price'][$index];
                 $orderItem->save();
-
+    
                 $product = Product::find($productId);
-                if ($product) {
-                    $newQuantity = $product->quantity - $validatedData['quantity'][$index];
-                    if ($newQuantity < 0) {
-                        throw new \Exception("Not enough stock for product: {$product->name}");
-                    }
-                    $product->quantity = $newQuantity;
-                    $product->save();
-                }
+                $product->quantity -= $validatedData['quantity'][$index];
+                $product->save();
             }
-
-            $supplier = Supplier::find($validatedData['supplier_id']);
-            $products = Product::whereIn('id', $validatedData['product_id'])->get(['id', 'name']);
-            $supplierEmail = $supplier->contact_info;
-
-            try {
-                Mail::to($supplierEmail)->send(
-                    new OrderConfirmationMail(
-                        $order,
-                        $products,
-                        $supplier,
-                        $validatedData,
-                        "New Order Confirmation - Order ID: {$order->id}"
-                    )
-                );
-            } catch (\Exception $e) {
-                throw new \Exception('Order saved, but email could not be sent. Error: ' . $e->getMessage());
-            }
-
+    
             DB::commit();
-
-            return response()->json(['success' => true, 'message' => 'Order successfully submitted and emailed to the supplier.']);
-
+    
+            return response()->json(['success' => true, 'message' => 'Order successfully submitted.']);
+    
         } catch (\Exception $e) {
             DB::rollBack();
-
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
     }
+    
 
     public function orderlist() 
     {

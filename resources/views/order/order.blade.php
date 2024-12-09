@@ -169,7 +169,6 @@
         transform: translateY(-50%);
         right: 100%;
         padding: 10px 20px;
-        background: linear-gradient(to right, rgba(40, 167, 69, 1) 0%, rgba(40, 167, 69, 1) 80%, rgba(255, 255, 255, 1) 100%);
         color: #fff;
         border-radius: 50px 0 0 50px;
         white-space: nowrap;
@@ -185,15 +184,27 @@
     .notification-container.show {
         opacity: 1;
         visibility: visible;
-        transform: translateX(-10px) translateY(-50%); /* Slide in from the right */
+        transform: translateX(-10px) translateY(-50%);
     }
 
-    .notification-container:after {
-        content: '';
-        display: inline-block;
-        width: 35px; 
-        background: transparent; 
+    .notification-success {
+        background: linear-gradient(
+            to right,
+            rgba(40, 167, 69, 1) 0%,
+            rgba(40, 167, 69, 1) 80%,
+            rgba(255, 255, 255, 1) 100%
+        );
     }
+
+    .notification-danger {
+        background: linear-gradient(
+            to right,
+            rgba(220, 53, 69, 1) 0%,
+            rgba(220, 53, 69, 1) 80%,
+            rgba(255, 255, 255, 1) 100%
+        );
+    }
+
 
     .custom-success {
         background-color: #28a745;
@@ -294,6 +305,7 @@
                                 <img src="https://i.ibb.co/zHVpKjb/toppng-com-shipping-png-512x512.png" alt="Order Items" style="height: 50px; width: auto;">
                             </a>
                         </div>
+                        
 
                         <!-- Order Form Starts Here -->
                         <form id="orderForm" method="POST">
@@ -474,56 +486,53 @@
 <script>
     let itemCount = 1;
 
-    document.getElementById('orderForm').addEventListener('submit', function(event) {
-        event.preventDefault();
-        const formData = new FormData(this);
+    document.getElementById('orderForm').addEventListener('submit', function (event) {
+    event.preventDefault();
+    const formData = new FormData(this);
 
-        $('#loadingOverlay').appendTo('body').css('display', 'flex');
+    $('#loadingOverlay').appendTo('body').css('display', 'flex');
 
-        fetch("{{ route('staff.add_order') }}", {
-            method: 'POST',
-            body: formData,
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest',
-                'X-CSRF-TOKEN': '{{ csrf_token() }}'
-            }
-        })
+    fetch("{{ route('staff.add_order') }}", {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+        }
+    })
         .then(response => {
+            document.getElementById('loadingOverlay').style.display = 'none';
             if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+                return response.json().then(errorData => {
+                    throw new Error(errorData.message || "An unknown error occurred.");
+                });
             }
             return response.json();
         })
         .then(data => {
-            document.getElementById('loadingOverlay').style.display = 'none';
             const notificationContainer = document.getElementById('notification-container');
+            notificationContainer.className = 'notification-container notification-success show';
 
-            if (data.success) {
-                notificationContainer.innerHTML = `<span>${data.message}</span>`;
-                notificationContainer.classList.add('show');
+            notificationContainer.innerHTML = `<span>${data.message}</span>`;
 
-                setTimeout(() => {
-                    printOrderDetails();
-                }, 500);
-
-                setTimeout(() => {
-                    notificationContainer.classList.remove('show');
-                    location.reload();
-                }, 3000);
-            } else {
-                throw new Error(data.message || "An unknown error occurred.");
-            }
+            setTimeout(() => {
+                notificationContainer.classList.remove('show');
+                location.reload();
+            }, 3000);
         })
         .catch(error => {
-            document.getElementById('loadingOverlay').style.display = 'none';
-
             const notificationContainer = document.getElementById('notification-container');
-            notificationContainer.innerHTML = `<span>An error occurred: ${error.message}</span>`;
-            notificationContainer.classList.add('show');
+            notificationContainer.className = 'notification-container notification-danger show';
 
-            setTimeout(() => notificationContainer.classList.remove('show'), 5000);
+            notificationContainer.innerHTML = `<span>${error.message}</span>`;
+
+            setTimeout(() => {
+                notificationContainer.classList.remove('show');
+            }, 5000);
         });
-    });
+});
+
+
 
     function printOrderDetails() {
         const printOrderDate = document.getElementById('orderDate').value;
