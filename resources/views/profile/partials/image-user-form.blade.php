@@ -13,10 +13,11 @@
         <div class="col-12 col-md-6 text-center d-flex justify-content-center align-items-center mb-4">
             <div class="d-inline-block justify-content-center">
                 @if(auth()->user()->profile_image)
-                    <img id="currentImage" src="{{ auth()->user()->profile_image }}" class="img-fluid rounded-circle profile-image" alt="Current Profile" style="max-width: 200px;">
+                    <img id="currentImage" src="{{ asset('profile_images/' . auth()->user()->profile_image) }}" class="img-fluid rounded-circle profile-image" alt="Current Profile" style="max-width: 200px;">
                 @else
-                    <img id="currentImage" src="{{ asset('assets/img/default.png') }}" class="img-fluid rounded-circle profile-image" alt="Current Profile" style="max-width: 200px;">
+                    <img id="currentImage" src="{{ asset('assets/img/default.png') }}" class="img-fluid rounded-circle profile-image" alt="Default Profile" style="max-width: 200px;">
                 @endif
+
             </div>
 
             <div class="mx-3" id="arrow" style="display: none;">

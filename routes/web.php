@@ -120,6 +120,6 @@ Route::middleware(['auth', 'loguseractivity', 'verified', 'autologout'])->group(
 });
 
 Route::get('auth/google/redirect', [GoogleAuthController::class, 'redirectToGoogle'])->name('auth.google.redirect');
-Route::get('auth/google/callback', [GoogleAuthController::class, 'handleGoogleCallback'])->name('auth.google.callback');
+Route::get('auth/google/call-back', [GoogleAuthController::class, 'handleGoogleCallback'])->name('auth.google.callback');
 
 require __DIR__.'/auth.php';

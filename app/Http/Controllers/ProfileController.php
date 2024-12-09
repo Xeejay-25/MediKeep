@@ -7,6 +7,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\View\View;
@@ -43,6 +44,8 @@ class ProfileController extends Controller
     /**
      * Update the user's profile image.
      */
+
+    // edited
     public function updateProfileImage(Request $request): RedirectResponse
     {
         $request->validate([
@@ -51,21 +54,30 @@ class ProfileController extends Controller
 
         $user = $request->user();
 
-        // Handle profile image upload
         if ($request->hasFile('profile_image')) {
             $image = $request->file('profile_image');
             $imageName = 'img_' . time() . '.' . $image->getClientOriginalExtension();
-            $image->move(public_path('profile_images'), $imageName);
 
-            // Delete old profile image if it exists
-            if ($user->profile_image && File::exists(public_path('profile_images/' . $user->profile_image))) {
-                File::delete(public_path('profile_images/' . $user->profile_image));
+            try {
+                $image->move(public_path('profile_images'), $imageName);
+
+                // Delete old profile image if it exists
+                if ($user->profile_image && File::exists(public_path('profile_images/' . $user->profile_image))) {
+                    File::delete(public_path('profile_images/' . $user->profile_image));
+                }
+
+                $user->profile_image = $imageName;
+                $user->save();
+
+                Log::info('Profile image updated successfully: ' . $imageName);
+            } catch (\Exception $e) {
+                Log::error('Error uploading profile image: ' . $e->getMessage());
+                return Redirect::route('profile.edit')->with('error', 'Image upload failed. Please try again.');
             }
-
-            $user->profile_image = $imageName;
+        } else {
+            Log::warning('No file uploaded');
+            return Redirect::route('profile.edit')->with('error', 'No file was uploaded.');
         }
-
-        $user->save();
 
         return Redirect::route('profile.edit')->with('success', 'Image updated successfully');
     }
