@@ -265,6 +265,26 @@ class Staff_dashboard extends Controller
             }
     
             DB::commit();
+
+
+            $supplier = Supplier::find($validatedData['supplier_id']);
+            $products = Product::whereIn('id', $validatedData['product_id'])->get(['id', 'name']);
+            $supplierEmail = $supplier->contact_info;
+
+            // update
+            try {
+                Mail::to($supplierEmail)->send(
+                    new OrderConfirmationMail(
+                        $order,
+                        $products,
+                        $supplier,
+                        $validatedData,
+                        "New Order Confirmation - Order ID: {$order->id}"
+                    )
+                );
+            } catch (\Exception $e) {
+                throw new \Exception('Order saved, but email could not be sent. Error: ' . $e->getMessage());
+            }
     
             return response()->json(['success' => true, 'message' => 'Order successfully submitted.']);
     

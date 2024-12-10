@@ -514,6 +514,11 @@
             notificationContainer.className = 'notification-container notification-success show';
 
             notificationContainer.innerHTML = `<span>${data.message}</span>`;
+            
+            // updated
+            setTimeout(() => {
+                    printOrderDetails();
+                }, 500);
 
             setTimeout(() => {
                 notificationContainer.classList.remove('show');
