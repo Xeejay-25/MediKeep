@@ -11,8 +11,16 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
-        //
+        $middleware->alias([
+            'user-role' =>  \App\Http\Middleware\RoleMiddleware::class,
+            'log-viewer-role' => \App\Http\Middleware\LogViewerAuth::class,
+            'loguseractivity' => \App\Http\Middleware\LogUserActivity::class,
+            'autologout' => \App\Http\Middleware\AutoLogout::class,            
+        ]);
+        $middleware->web(append: [
+        ]);
     })
+    
     ->withExceptions(function (Exceptions $exceptions) {
         //
     })->create();

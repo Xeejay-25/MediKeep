@@ -1,52 +1,73 @@
-<x-guest-layout>
-    <form method="POST" action="{{ route('register') }}">
-        @csrf
+@extends('Backend.backend/auth.app')
+@section('main-content') 
 
-        <!-- Name -->
-        <div>
-            <x-input-label for="name" :value="__('Name')" />
-            <x-text-input id="name" class="block mt-1 w-full" type="text" name="name" :value="old('name')" required autofocus autocomplete="name" />
-            <x-input-error :messages="$errors->get('name')" class="mt-2" />
+<section id="header">
+    <div class="top-bar">
+        <div class="container">
+            <div class="navigation" id="navigation-scroll">
+                    <div class="row">
+                        <div class="col-md-7 col-xs-10">
+                            @include('components.logo')
+                        </div>
+                    </div><!-- /.row -->
+                </div><!-- /.navigation -->
+            </div><!--/.container-->
+        </div><!--/.top-bar-->
+
+    <div class="container">
+        <div class="starting">
+            <div class="row">
+                @include('components.welcome-invm-img')
+                <div class="col-md-6 col-lg-4">
+                    <div class="banner-text">
+                        <!-- Registration Form Box -->
+                        <div class="card p-5 shadow-lg" style="border-radius: 15px; background-color: #f9f9f9;"> <!-- Card for the form -->
+                            <h3 class="text-center mb-2">{{ __('Register') }}</h3>
+                            <form method="POST" action="{{ route('register') }}">
+                                @csrf
+
+                                <!-- Name -->
+                                <div class="form-group">
+                                    <x-input-label for="name" :value="__('Name')" />
+                                    <x-text-input id="name" class="form-control mt-1" type="text" name="name" :value="old('name')" required autofocus autocomplete="name" />
+                                    <x-input-error :messages="$errors->get('name')" class="mt-2" />
+                                </div>
+
+                                <!-- Email Address -->
+                                <div class="form-group mt-4">
+                                    <x-input-label for="email" :value="__('Email')" />
+                                    <x-text-input id="email" class="form-control mt-1" type="email" name="email" :value="old('email')" required autocomplete="username" />
+                                    <x-input-error :messages="$errors->get('email')" class="mt-2" />
+                                </div>
+
+                                <!-- Actions -->
+                                <div class="d-flex justify-content-between mt-4 align-items-center">
+                                    <a class="text-sm text-muted" href="{{ route('login') }}">
+                                        {{ __('Already registered?') }}
+                                    </a>
+
+                                    <button type="submit" class="btn btn-primary shadow wow animated fadeInRight">
+                                        {{ __('Register') }}
+                                    </button>
+                                </div>
+
+                                <!-- Google Sign-In -->
+                                <div class="mt-4 text-center" href="{{ route('auth.google.redirect') }}">
+                                    @include('components.google-signin', ['buttonText' => 'Register with Google'])
+                                </div>
+                            </form>
+                        </div> <!-- /.card -->
+                    </div> <!-- /.banner-text -->
+                </div> <!-- /.col-md-6 col-lg-5 -->
+            </div>
         </div>
+        <!-- /.starting -->
+    </div>
+    <!-- /.container -->
+</section>
+<!-- /#header -->
 
-        <!-- Email Address -->
-        <div class="mt-4">
-            <x-input-label for="email" :value="__('Email')" />
-            <x-text-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email')" required autocomplete="username" />
-            <x-input-error :messages="$errors->get('email')" class="mt-2" />
-        </div>
-
-        <!-- Password -->
-        <div class="mt-4">
-            <x-input-label for="password" :value="__('Password')" />
-
-            <x-text-input id="password" class="block mt-1 w-full"
-                            type="password"
-                            name="password"
-                            required autocomplete="new-password" />
-
-            <x-input-error :messages="$errors->get('password')" class="mt-2" />
-        </div>
-
-        <!-- Confirm Password -->
-        <div class="mt-4">
-            <x-input-label for="password_confirmation" :value="__('Confirm Password')" />
-
-            <x-text-input id="password_confirmation" class="block mt-1 w-full"
-                            type="password"
-                            name="password_confirmation" required autocomplete="new-password" />
-
-            <x-input-error :messages="$errors->get('password_confirmation')" class="mt-2" />
-        </div>
-
-        <div class="flex items-center justify-end mt-4">
-            <a class="underline text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-800" href="{{ route('login') }}">
-                {{ __('Already registered?') }}
-            </a>
-
-            <x-primary-button class="ms-4">
-                {{ __('Register') }}
-            </x-primary-button>
-        </div>
-    </form>
-</x-guest-layout>
+@endsection
+@push('custom-scripts')
+@endpush
+    

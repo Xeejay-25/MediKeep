@@ -6,107 +6,135 @@
 @section('main-content')   
 
   <div class="container-fluid py-4">
-      
-    <!-- table List -->
+
+    {{-- Product Edit Modal with Two Columns --}}
+    <div class="modal fade" id="editProductModal" tabindex="-1" aria-labelledby="editProductModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="editProductModalLabel">Edit Product</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <form id="editProductForm" method="POST" action="{{ route('staff.update_product') }}">
+              @csrf
+              @method('PUT') <!-- Ensure to use the PUT method for updating -->
+              <input type="hidden" id="editProductId" name="id"> <!-- Hidden field for product ID -->
+              <div class="row">
+                <!-- Left Column -->
+                <div class="col-md-6">
+                  <!-- Product Name -->
+                  <div class="mb-3">
+                    <label for="editProductName" class="form-label">Product Name</label>
+                    <input type="text" class="form-control" id="editProductName" name="name" required>
+                  </div>
+                  <!-- Category -->
+                  <div class="mb-3">
+                    <label for="editProductCategory" class="form-label">Category</label>
+                    <input type="text" class="form-control" id="editProductCategory" name="category" required>
+                  </div>
+                  <!-- Type (Subcategory) -->
+                  <div class="mb-3">
+                    <label for="editProductType" class="form-label">Type</label>
+                    <input type="text" class="form-control" id="editProductType" name="subcategory" required>
+                  </div>
+                </div>
+                <!-- Right Column -->
+                <div class="col-md-6">
+                  <!-- Description -->
+                  <div class="mb-3">
+                    <label for="editProductDescription" class="form-label">Description</label>
+                    <textarea class="form-control" id="editProductDescription" name="description" required></textarea>
+                  </div>
+                  <!-- Manufacturer -->
+                  <div class="mb-3">
+                    <label for="editProductManufacturer" class="form-label">Manufacturer</label>
+                    <input type="text" class="form-control" id="editProductManufacturer" name="manufacturer" required>
+                  </div>
+                  <!-- Quantity -->
+                  <div class="mb-3">
+                    <label for="editProductQuantity" class="form-label">Quantity</label>
+                    <input type="text" class="form-control" id="editProductQuantity" name="quantity" required>
+                  </div>
+                  <!-- Price -->
+                  <div class="mb-3">
+                    <label for="editProductPrice" class="form-label">Price</label>
+                    <input type="text" class="form-control" id="editProductPrice" name="price" required>
+                  </div>
+                  
+                </div>
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            <button type="submit" class="btn btn-primary" form="editProductForm">Save changes</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Table List -->
     <div class="card card-info mt-4 mb-4 p-4">
       <div class="card-body">
         <div class="card-header mb-2 p-0"> 
-          <h3 class="card-title">Drug Buyer </h3>
+          <h3 class="card-title">Products</h3>
         </div>
 
+        @include('message')
         <div class="table-responsive">
           <table id="datatablesSimpleOne" class="table table-bordered table-hover">
             <thead>
               <tr>
-                <th>Drug Name</th>
-                <th>Contact #</th>
-                <th>Purchase by</th>
-                <th>Status</th>
+                <th>Product Info</th>
+                <th>Type</th>
+                <th>Price</th>
+                <th>Action</th>
               </tr>
             </thead>
             <tbody>
-              <tr data-info='{"drug": "Ecstasy", "contact": "+123456789", "buyer": "HealthPlus", "status": "Pending"}'>
-                <td>Ecstasy</td>
-                <td>+123456789</td>
-                <td>HealthPlus</td>
-                <td><span class="status-circle pending"></span>Pending</td>
+              <tr>
+                @foreach($products as $product)
+              
+                  <td>
+                    Name: {{ $product->name }} <br>
+                    Category: {{ $product->category }} <br>
+                    Description: {{ $product->description }} <br>
+                    Measurement: {{ $product->measurement }} <br>
+                    Manufacturer: {{ $product->manufacturer }} <br>
+                    Quantity:{{ $product->quantity }} <br>
+                  </td>
+                  <td class="text-center align-middle"> {{ $product->subcategory }}</td>
+                  <td class="text-center align-middle"> ₱ - {{ $product->price }}</td>
+                  <td class="text-center align-middle">
+                    <button class="btn btn-primary editProductBtn" 
+                      data-id="{{ $product->id }}" 
+                      data-name="{{ $product->name }}" 
+                      data-category="{{ $product->category }}" 
+                      data-subcategory="{{ $product->subcategory }}" 
+                      data-description="{{ $product->description }}" 
+                      data-manufacturer="{{ $product->manufacturer }}" 
+                      data-price="{{ $product->price }}"
+                      data-quantity="{{ $product->quantity }}">Edit
+                    </button>
+                    <form action="{{ route('staff.delete_product', $product->id) }}" method="POST" style="display:inline;">
+                      @csrf
+                      @method('DELETE')
+                      <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to DELETE?')">Delete</button>
+                    </form>
+                  </td>
               </tr>
-              <tr data-info='{"drug": "Heroin", "contact": "+987654321", "buyer": "Medicare", "status": "Intransit"}'>
-                <td>Heroin</td>
-                <td>+987654321</td>
-                <td>Medicare</td>
-                <td><span class="status-circle intransit"></span>Intransit</td>
-              </tr>
-              <tr data-info='{"drug": "Marijuana", "contact": "+1122334455", "buyer": "PharmaCorp", "status": "Delivered"}'>
-                <td>Marijuana</td>
-                <td>+1122334455</td>
-                <td>PharmaCorp</td>
-                <td><span class="status-circle delivered"></span>Delivered</td>
-              </tr>
+              @endforeach
             </tbody>
           </table>
         </div>
       </div>
     </div>
-    <!-- end -->
+    <!-- End -->
 
-    <!-- Modal for displaying details -->
-    <div class="modal fade" id="infoModal" tabindex="-1" aria-labelledby="infoModalLabel" aria-hidden="true">
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title" id="infoModalLabel">Drug Details</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-          </div>
-          <div class="modal-body">
-            <p><strong>Drug Name:</strong> <span id="modalDrugName"></span></p>
-            <p><strong>Contact #:</strong> <span id="modalContact"></span></p>
-            <p><strong>Purchase by:</strong> <span id="modalBuyer"></span></p>
-            <p><strong>Status:</strong> <span id="modalStatus"></span></p>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-          </div>
-        </div>
-      </div>
-    </div>
-    <!-- end Modal -->
-    
-    <!-- footer -->
-    <footer class="footer pt-3">
-      <div class="container-fluid">
-        <div class="row align-items-center justify-content-lg-between">
-          <div class="col-lg-6 mb-lg-0 mb-4">
-            <div class="copyright text-center text-sm text-muted text-lg-start">
-              © <script>
-                document.write(new Date().getFullYear())
-              </script>,
-              made with <i class="fa fa-heart"></i> by
-              <a href="https://www.creative-tim.com" class="font-weight-bold" target="_blank">Creative Tim</a>
-              for a better web.
-            </div>
-          </div>
+    <!-- Footer -->
+    @include('components.footer')
 
-          <div class="col-lg-6">
-            <ul class="nav nav-footer justify-content-center justify-content-lg-end">
-              <li class="nav-item">
-                <a href="https://www.creative-tim.com" class="nav-link text-muted" target="_blank">Creative Tim</a>
-              </li>
-              <li class="nav-item">
-                <a href="https://www.creative-tim.com/presentation" class="nav-link text-muted" target="_blank">About Us</a>
-              </li>
-              <li class="nav-item">
-                <a href="https://creative-tim.com/blog" class="nav-link text-muted" target="_blank">Blog</a>
-              </li>
-              <li class="nav-item">
-                <a href="https://www.creative-tim.com/license" class="nav-link pe-0 text-muted" target="_blank">License</a>
-              </li>
-            </ul>
-          </div>
-        </div>
-      </div>
-    </footer>
-    <!-- end footer -->
 
   </div>
 
@@ -115,23 +143,32 @@
 @push('custom-scripts')
 <!-- Add Bootstrap JS for modal -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
 <script>
-  // JavaScript to handle row click and show modal
-  document.querySelectorAll('#datatablesSimpleOne tbody tr').forEach(row => {
-    row.addEventListener('click', function() {
-      // Get the data from the row
-      const data = JSON.parse(this.getAttribute('data-info'));
-
-      // Populate the modal with the row's data
-      document.getElementById('modalDrugName').textContent = data.drug;
-      document.getElementById('modalContact').textContent = data.contact;
-      document.getElementById('modalBuyer').textContent = data.buyer;
-      document.getElementById('modalStatus').textContent = data.status;
-
-      // Show the modal
-      var modal = new bootstrap.Modal(document.getElementById('infoModal'));
-      modal.show();
+  $(document).ready(function() {
+    $('.editProductBtn').on('click', function() {
+        // Get product data from button attributes
+        var id = $(this).data('id');
+        var name = $(this).data('name');
+        var category = $(this).data('category');
+        var subcategory = $(this).data('subcategory'); // Type field
+        var description = $(this).data('description');
+        var manufacturer = $(this).data('manufacturer');
+        var price = $(this).data('price');
+        var quantity = $(this).data('quantity');
+        
+        // Populate the modal with product data
+        $('#editProductId').val(id);
+        $('#editProductName').val(name);
+        $('#editProductCategory').val(category);
+        $('#editProductType').val(subcategory); // Populating the Type (subcategory)
+        $('#editProductDescription').val(description);
+        $('#editProductManufacturer').val(manufacturer);
+        $('#editProductQuantity').val(quantity);
+        $('#editProductPrice').val(price);
+        
+        
+        // Show the modal
+        $('#editProductModal').modal('show');
     });
   });
 </script>

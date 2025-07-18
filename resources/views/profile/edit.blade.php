@@ -1,29 +1,75 @@
-<x-app-layout>
-    <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-            {{ __('Profile') }}
-        </h2>
-    </x-slot>
+@php
+    use App\Models\User;
 
-    <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
-            <div class="p-4 sm:p-8 bg-white dark:bg-gray-800 shadow sm:rounded-lg">
-                <div class="max-w-xl">
-                    @include('profile.partials.update-profile-information-form')
-                </div>
-            </div>
+    $layout = 'Backend.Layout.app';
 
-            <div class="p-4 sm:p-8 bg-white dark:bg-gray-800 shadow sm:rounded-lg">
-                <div class="max-w-xl">
-                    @include('profile.partials.update-password-form')
-                </div>
-            </div>
+    if (auth()->check()) {
+        $user = auth()->user();
+        if ($user->role === User::ROLE_ADMIN) {
+            $layout = 'admin.Backend.Layout.app';
+        } elseif ($user->role === User::ROLE_SUPERADMIN) {
+            $layout = 'superadmin.Backend.Layout.app';
+        } elseif ($user->role === User::ROLE_STAFF) {
+            $layout = 'Backend.Layout.app';
+        }
+    }
+@endphp
 
-            <div class="p-4 sm:p-8 bg-white dark:bg-gray-800 shadow sm:rounded-lg">
-                <div class="max-w-xl">
-                    @include('profile.partials.delete-user-form')
+@extends($layout)
+
+@section('breadcrumb', 'Edit Profile')
+@section('title', 'Profile')
+@section('main-content')   
+    <div class="py-2">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-8 offset-md-2">
+
+                    @if(Session::has('success'))
+                        <div class="alert alert-success" role="alert">
+                            {{ Session::get('success') }}
+                        </div>
+                    @endif
+
+                    @if ($errors->any())
+                        <div class="alert alert-danger">
+                            <ul>
+                                @foreach ($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    @endif
+                    
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            @include('profile.partials.image-user-form')
+                        </div>
+                    </div>
+
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            @include('profile.partials.update-profile-information-form')
+                        </div>
+                    </div>
+
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            @include('profile.partials.update-password-form')
+                        </div>
+                    </div>
+
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            @include('profile.partials.delete-user-form')
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-</x-app-layout>
+@endsection
+
+@push('custom-scripts')
+<!-- Add any custom scripts here -->
+@endpush

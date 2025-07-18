@@ -7,9 +7,13 @@
     "require": {
         "php": "^8.2",
         "laravel/framework": "^11.9",
-        "laravel/tinker": "^2.9"
+        "laravel/socialite": "^5.16",
+        "laravel/tinker": "^2.9",
+        "nesbot/carbon": "^3.8",
+        "opcodesio/log-viewer": "^3.11"
     },
     "require-dev": {
+        "barryvdh/laravel-ide-helper": "^3.1",
         "fakerphp/faker": "^1.23",
         "laravel/breeze": "^2.1",
         "laravel/pint": "^1.13",

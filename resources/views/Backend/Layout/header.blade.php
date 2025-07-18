@@ -15,18 +15,20 @@
         
         <div class="collapse navbar-collapse mt-sm-0 mt-2 me-md-0 me-sm-4" id="navbar">
           <div class="ms-md-auto pe-md-3 d-flex align-items-center">
-            <div class="input-group">
-              <span class="input-group-text text-body"><i class="fas fa-search" aria-hidden="true"></i></span>
-              <input type="text" class="form-control" placeholder="Type here...">
-            </div>
           </div>
           <ul class="navbar-nav  justify-content-end">
             <li class="nav-item d-flex align-items-center">
-              <a href="javascript:;" class="nav-link text-body font-weight-bold px-0">
-                <img class="nav-img me-sm-1" src="../assets/img/cj.png" alt="User Logo" height="30" width="30">
-                <span class="d-sm-inline d-none">Carl Justin</span>
-              </a>
+                <a href="{{ route('profile.edit') }}" class="nav-link text-body font-weight-bold px-0">
+                  {{-- edited --}}
+                  @if(auth()->user()->profile_image)
+                    <img src="{{ asset('profile_images/' . auth()->user()->profile_image) }}" alt="Profile Image" class="rounded-circle" style="width: 40px; height: 40px;">
+                  @else
+                    <img src="{{ asset('assets/img/default.png') }}" alt="Default Image" class="rounded-circle" style="width: 40px; height: 40px;">
+                  @endif
+                    <span class="d-sm-inline d-none">{{ Auth::user()->name }}</span>
+                </a>
             </li>
+          
             <li class="nav-item d-xl-none ps-3 d-flex align-items-center">
               <a href="javascript:;" class="nav-link text-body p-0" id="iconNavbarSidenav">
                 <div class="sidenav-toggler-inner">

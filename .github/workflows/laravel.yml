@@ -1,0 +1,49 @@
+name: 🎉 Deploy
+
+on: push
+
+jobs:
+  web-deploy:
+    name: 🎉 Deploy
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: 🚚 Get latest code
+      uses: actions/checkout@v2
+
+    - name: Set up PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.3'
+
+    - name: Use Node.js 18
+      uses: actions/setup-node@v2
+      with:
+        node-version: '18'
+      
+    - name: Install Composer Dependencies
+      run: composer install
+
+    - name: 🔨 Build Project
+      run: |
+        npm install
+        npm run build
+    
+    # - name: Delete existing database.sqlite
+    #   run: |
+    #     if [ -f database/database.sqlite ]; then
+    #       rm database/database.sqlite
+    #     fi
+
+    - name: Run Migrations and Seeders
+      run: |
+        php artisan migrate --force
+        php artisan db:seed --class=UserSeeder --force
+        
+    - name: 📂 Sync files
+      uses: SamKirkland/FTP-Deploy-Action@4.0.0
+      with:
+        server: ftpupload.net
+        username: if0_36689266
+        password: fxFA8QnPR5B 
+        server-dir: /htdocs/medikeep/

@@ -28,7 +28,7 @@
   --bs-light: #e9ecef;
   --bs-dark: #344767;
   --bs-white: #fff;
-  --bs-font-sans-serif: Open Sans;
+  --bs-font-sans-serif: "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
   --bs-font-monospace: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
   --bs-gradient: linear-gradient(180deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0));
 }
@@ -20150,8 +20150,10 @@ label,
   transition: opacity 0.3 ease;
 }
 
+/* here button icons color */
 .bg-gradient-primary {
-  background-image: linear-gradient(310deg, #7928CA 0%, #FF0080 100%);
+  background-image: linear-gradient(310deg, #2152ff 0%, #21d4fd 100%);
+
 }
 
 .bg-gradient-secondary {
@@ -20163,7 +20165,11 @@ label,
 }
 
 .bg-gradient-info {
-  background-image: linear-gradient(310deg, #2152ff 0%, #21d4fd 100%);
+  background-image: linear-gradient(310deg, #5bc0de 0%, #117a8b 100%);
+}
+
+.bg-gradient-btn{
+  background-image: linear-gradient(310deg, #5cf785 40%, #3ac25e 100%);
 }
 
 .bg-gradient-warning {
@@ -21697,7 +21703,8 @@ hr.horizontal.gray-light {
 
 /* icon background */
 .navbar-vertical .navbar-nav>.nav-item .nav-link.active .icon {
-  background-image: linear-gradient(310deg, #17c1e8 0%, #0900FF 100%);
+  background-image: linear-gradient(310deg,  #2152ff 0%, #21d4fd 100%);
+
 }
 
 .navbar-vertical .navbar-nav>.nav-item .nav-link.active .icon svg .color-background,
